@@ -30,6 +30,7 @@
                                 <field name="wholesale_price"/>
                                 <field name="presta_id"/>
                                 <field name="manufacturer_id" domain="[('manufacturer','=',True)]"/>
+
                                 <!--<group>-->
                                 <!--<field name="product_description" readonly="1"/>-->
                                 <!--</group>-->
@@ -75,6 +76,8 @@
                 <xpath expr="//field[@name='categ_id']" position="replace">
                     <field name="categ_id" domain="[('presta_id','!=',True)]"/>
                 </xpath>
+
+
 
 
 <!--                <xpath expr="//sheet/notebook/page[@name='general_information']/group/group[@name='group_general']/field[@name='uom_po_id']"-->
@@ -538,7 +541,8 @@
                         <field name="presta_id"/>
                         <field name="shop_ids" widget="many2many_tags"/>
                         <field name="to_be_exported"/>
-                        <field name="friendly_url" attrs="{'required':[('is_presta','=', True)]}"/>
+                        <field name="friendly_url"/>
+<!--                        <field name="friendly_url" attrs="{'required':[('is_presta','=', True)]}"/>-->
                         <field name="meta_title"/>
                         <field name="meta_description"/>
                         <field name="is_presta" invisible="1"/>
