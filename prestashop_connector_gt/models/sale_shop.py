@@ -2824,8 +2824,8 @@ class SaleShop(models.Model):
 
                     presta_id = self.get_value_data(presta_res.get('prestashop').get('product').get('id'))
                     product.write({'presta_id': presta_id})
-                    if product.image_1920:
-                        get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
+                    # if product.image_1920:
+                    #     get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
                     # if product.product_template_image_ids:
                     #     for images in product.product_template_image_ids:
                     #         get = self.create_images(prestashop, images.image_1920, presta_id, 'tushar.png')
@@ -3062,8 +3062,8 @@ class SaleShop(models.Model):
 
                 presta_id = self.get_value_data(presta_res.get('prestashop').get('product').get('id'))
                 product.write({'presta_id': presta_id})
-                if product.image_1920:
-                    get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
+                # if product.image_1920:
+                #     get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
                 # if product.product_template_image_ids:
                 #     for images in product.product_template_image_ids:
                 #         get = self.create_images(prestashop, images.image_1920, presta_id, 'tushar.png')
