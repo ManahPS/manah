@@ -44,6 +44,8 @@
         <menuitem action="preatashop_category_action_inherit" name="Categories" id="menu_product_category_presta" parent="catalog_menu_presta" sequence="2" />
         <menuitem action="attribute_action_inherit" id="menu_attribute_action_inherit" parent="catalog_menu_presta" sequence="3"/>
         <menuitem action="variants_action_inherit" id="menu_variants_action_inherit" parent="catalog_menu_presta" sequence="4"/>
+        <menuitem action="product_feature_action_inherit" id="menu_product_feature_action_inherit" parent="catalog_menu_presta" sequence="5"/>
+        <menuitem action="product_feature_value_action_inherit" id="menu_product_feature_value_action_inherit" parent="catalog_menu_presta" sequence="6"/>
 
 
         <!-- <menuitem id="customer_presta_menu" action="inherit_action_partner_form" parent="sale_presta_menu" name="Customers" sequence="1"/> -->

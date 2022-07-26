@@ -24,6 +24,7 @@
 						<field name="import_product_attributes" />
 						<newline/>
 						<field name="import_categories"/>
+						<field name="import_product_fetures"/>
 						<field name="import_products"/>
 						<field name="import_inventory"/>
 						<field name="import_carriers"/>
@@ -38,6 +39,7 @@
 						<field name="update_cart_rules"/>
 						<field name="update_catalog_rules"/>
 						<field name="update_product_data" />
+						<field name="update_product_feature" invisible="True"/>
 						<label for="update_product_data" string="(Includes Updation of Products,Images and Variants)"></label>
 						<newline/>
 						<field name="update_presta_product_inventory"/>
@@ -52,7 +54,7 @@
 						<field name="export_presta_products"/>
 						<field name="export_presta_products_variants"/>
 						<field name="export_presta_product_inventory"/>
-						<field name="export_presta_orders"/>
+<!--						<field name="export_presta_orders"/>-->
 					</group>
 				</group>
 				<footer>

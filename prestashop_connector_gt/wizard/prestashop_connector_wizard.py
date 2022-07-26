@@ -46,6 +46,8 @@ class PrestashopConnectorWizard(models.Model):
     update_presta_product_inventory = fields.Boolean(string="Update Product Inventory")
     update_order_status = fields.Boolean('Update Order Status')
 
+    update_product_feature = fields.Boolean('Update Product Feature')
+
     export_presta_customers = fields.Boolean(string="Export Customers")
     export_presta_customer_messages = fields.Boolean(string="Export Customer Messages")
     export_presta_orders = fields.Boolean(string="Export Orders")
@@ -53,6 +55,8 @@ class PrestashopConnectorWizard(models.Model):
     export_presta_products_variants = fields.Boolean(string="Export Products Variants")
     export_presta_product_inventory = fields.Boolean(string="Export Product Inventory")
     export_presta_categories = fields.Boolean(string="Export Categories")
+
+    import_product_fetures = fields.Boolean(string="Import Product Feature")
 
     
 #    @api.model
@@ -125,6 +129,9 @@ class PrestashopConnectorWizard(models.Model):
             for shop_id in shop_ids:
                 shop_id.import_catalog_price_rules()
 
+        if self.import_product_fetures:
+            self.shop_ids.import_product_fetures()
+
         if self.update_order_status:
             for shop_id in shop_ids:
                 shop_id.update_order_status()
@@ -156,6 +163,9 @@ class PrestashopConnectorWizard(models.Model):
 
         if self.update_product_data:
             self.shop_ids.update_products()
+
+        if self.update_product_feature:
+            self.shop_ids.update_products_feature()
 
         if self.update_presta_product_inventory:
             self.shop_ids.update_presta_product_inventory()

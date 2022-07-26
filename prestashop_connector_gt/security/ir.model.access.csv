@@ -25,3 +25,6 @@ prestashop_access_log,prestashop.log,model_prestashop_log,prestashop_connector_g
 prestashop_access_log_error,log.error,model_log_error,prestashop_connector_gt.group_prestashop_connector_users,1,1,1,1
 access_create_prestashop_shop,access_create_prestashop_shop,model_create_prestashop_shop,prestashop_connector_gt.group_prestashop_connector_users,1,1,1,1
 access_prestashop_tax_rule,access_prestashop_tax_rule,model_prestashop_tax_rule,base.group_user,1,1,1,1
+access_product_feature,access_product_feature,model_product_feature,base.group_user,1,1,1,1
+access_product_feature_value,access_product_feature_value,model_product_feature_value,base.group_user,1,1,1,1
+access_product_spec,access_product_spec,model_product_spec,base.group_user,1,1,1,1
