@@ -1780,149 +1780,149 @@ class SaleShop(models.Model):
         product_obj = self.env['product.product']
         status_obj = self.env['presta.order.status']
         order_vals = {}
-        try:
-            id_customer = res_partner_obj.search(
-                [('presta_id', '=', order_detail.get('id_customer')), ('prestashop_customer', '=', True)], limit=1)
-            if not id_customer:
-                try:
-                    cust_data = prestashop.get('customers', order_detail.get('id_customer'))
-                    id_customer = self.create_customer(cust_data.get('customer'), prestashop)
-                except Exception as e:
-                    id_customer = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Customer',
-                                                                        {'name': 'Removed Customer'})
-            id_address_delivery = res_partner_obj.search(
-                [('presta_id', '=', order_detail.get('id_address_delivery')), ('prestashop_address', '=', True)],
-                limit=1)
-            if not id_address_delivery:
-                try:
-                    address_data = prestashop.get('addresses', order_detail.get('id_address_delivery'))
-                    id_address_delivery = self.create_address(address_data.get('address'), prestashop)
-                except Exception as e:
-                    id_address_delivery = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
-                                                                                {'name': 'Removed Addresss'})
-            id_address_invoice = res_partner_obj.search(
-                [('presta_id', '=', order_detail.get('id_address_invoice')), ('prestashop_address', '=', True)],
-                limit=1)
-            if not id_address_invoice:
-                try:
-                    address_inv_data = prestashop.get('addresses', order_detail.get('id_address_invoice'))
-                    id_address_invoice = self.create_address(address_inv_data.get('address'), prestashop)
-                except Exception as e:
-                    id_address_invoice = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
-                                                                               {'name': 'Removed Addresss'})
-            order_vals.update({'partner_id': id_customer.id, 'partner_shipping_id': id_address_delivery.id,
-                               'partner_invoice_id': id_address_invoice.id})
-            state_id = status_obj.search([('presta_id', '=', self.get_value_data(order_detail.get('current_state')))],
-                                         limit=1)
-            if not state_id:
-                try:
-                    orders_status_lst = prestashop.get('order_states',
-                                                       self.get_value_data(order_detail.get('current_state')))
-                    state_id = status_obj.create({'name': self.get_value_data(
-                        self.get_value(orders_status_lst.get('order_state').get('name').get('language'))),
-                        'presta_id': self.get_value_data(
-                            order_detail.get('current_state')), })
-                except Exception as e:
-                    state_id = self.remove_record_prestashop_checked(status_obj, 'Removed Status',
-                                                                     {'name': 'Removed Status'})
+        # try:
+        id_customer = res_partner_obj.search(
+            [('presta_id', '=', order_detail.get('id_customer')), ('prestashop_customer', '=', True)], limit=1)
+        if not id_customer:
+            try:
+                cust_data = prestashop.get('customers', order_detail.get('id_customer'))
+                id_customer = self.create_customer(cust_data.get('customer'), prestashop)
+            except Exception as e:
+                id_customer = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Customer',
+                                                                    {'name': 'Removed Customer'})
+        id_address_delivery = res_partner_obj.search(
+            [('presta_id', '=', order_detail.get('id_address_delivery')), ('prestashop_address', '=', True)],
+            limit=1)
+        if not id_address_delivery:
+            try:
+                address_data = prestashop.get('addresses', order_detail.get('id_address_delivery'))
+                id_address_delivery = self.create_address(address_data.get('address'), prestashop)
+            except Exception as e:
+                id_address_delivery = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
+                                                                            {'name': 'Removed Addresss'})
+        id_address_invoice = res_partner_obj.search(
+            [('presta_id', '=', order_detail.get('id_address_invoice')), ('prestashop_address', '=', True)],
+            limit=1)
+        if not id_address_invoice:
+            try:
+                address_inv_data = prestashop.get('addresses', order_detail.get('id_address_invoice'))
+                id_address_invoice = self.create_address(address_inv_data.get('address'), prestashop)
+            except Exception as e:
+                id_address_invoice = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
+                                                                           {'name': 'Removed Addresss'})
+        order_vals.update({'partner_id': id_customer.id, 'partner_shipping_id': id_address_delivery.id,
+                           'partner_invoice_id': id_address_invoice.id})
+        state_id = status_obj.search([('presta_id', '=', self.get_value_data(order_detail.get('current_state')))],
+                                     limit=1)
+        if not state_id:
+            try:
+                orders_status_lst = prestashop.get('order_states',
+                                                   self.get_value_data(order_detail.get('current_state')))
+                state_id = status_obj.create({'name': self.get_value_data(
+                    self.get_value(orders_status_lst.get('order_state').get('name').get('language'))),
+                    'presta_id': self.get_value_data(
+                        order_detail.get('current_state')), })
+            except Exception as e:
+                state_id = self.remove_record_prestashop_checked(status_obj, 'Removed Status',
+                                                                 {'name': 'Removed Status'})
 
-            a = self.get_value_data(order_detail.get('payment'))
-            p_mode = False
-            if a[0] == 'Cash on delivery  COD':
-                p_mode = 'cod'
-            elif a[0] == 'Bank wire':
-                p_mode = 'bankwire'
-            elif a[0] == 'Payments by check':
-                p_mode = 'cheque'
-            elif a[0] == 'Bank transfer':
-                p_mode = 'banktran'
-            order_vals.update({
-                'reference': self.get_value_data(order_detail.get('reference')),
-                'presta_id': order_detail.get('id'),
-                'warehouse_id': self.warehouse_id.id,
-                'presta_order_ref': self.get_value_data(order_detail.get('reference')),
-                'pretsa_payment_mode': p_mode,
-                'pricelist_id': self.pricelist_id.id,
-                'workflow_order_id': self.workflow_id.id,
-                # 'name':  self.get_value_data(order_detail.get('id')),
-                'order_status': state_id.id,
-                'shop_id': self.id,
-                'prestashop_order': True,
-                'presta_order_date': self.get_value_data(order_detail.get('date_add')),
-            })
-            if self.workflow_id.picking_policy:
-                order_vals.update({'picking_policy': self.workflow_id.picking_policy})
-            carr_id = False
-            if int(self.get_value_data(order_detail.get('id_carrier'))) > 0:
-                carr_obj_id = carrier_obj.search(
-                    [('presta_id', '=', order_detail.get('id_carrier')), ('is_presta', '=', True)], limit=1)
-                if carr_obj_id:
-                    carr_id = carr_obj_id.id
-                if not carr_obj_id:
-                    try:
-                        carrier_data = prestashop.get('carriers', self.get_value_data(order_detail.get('id_carrier')))
-                        carr_id = self.create_carrier(self.get_value_data(carrier_data.get('carrier')))
-                    except Exception as e:
-                        product_id = self.remove_record_prestashop_checked(product_obj, 'Removed Carrier',
-                                                                           {'name': 'Removed Carrier'})
-                        carr_id = self.remove_record_prestashop_checked(carrier_obj, 'Removed Carrier',
-                                                                        {'name': 'Removed Carrier',
-                                                                         'product_id': product_id.id,
-                                                                         'is_presta': True}).id
+        a = self.get_value_data(order_detail.get('payment'))
+        p_mode = False
+        if a[0] == 'Cash on delivery  COD':
+            p_mode = 'cod'
+        elif a[0] == 'Bank wire':
+            p_mode = 'bankwire'
+        elif a[0] == 'Payments by check':
+            p_mode = 'cheque'
+        elif a[0] == 'Bank transfer':
+            p_mode = 'banktran'
+        order_vals.update({
+            'reference': self.get_value_data(order_detail.get('reference')),
+            'presta_id': order_detail.get('id'),
+            'warehouse_id': self.warehouse_id.id,
+            'presta_order_ref': self.get_value_data(order_detail.get('reference')),
+            'pretsa_payment_mode': p_mode,
+            'pricelist_id': self.pricelist_id.id,
+            'workflow_order_id': self.workflow_id.id,
+            # 'name':  self.get_value_data(order_detail.get('id')),
+            'order_status': state_id.id,
+            'shop_id': self.id,
+            'prestashop_order': True,
+            'presta_order_date': self.get_value_data(order_detail.get('date_add')),
+        })
+        if self.workflow_id.picking_policy:
+            order_vals.update({'picking_policy': self.workflow_id.picking_policy})
+        carr_id = False
+        if int(self.get_value_data(order_detail.get('id_carrier'))) > 0:
+            carr_obj_id = carrier_obj.search(
+                [('presta_id', '=', order_detail.get('id_carrier')), ('is_presta', '=', True)], limit=1)
+            if carr_obj_id:
+                carr_id = carr_obj_id.id
+            if not carr_obj_id:
+                try:
+                    carrier_data = prestashop.get('carriers', self.get_value_data(order_detail.get('id_carrier')))
+                    carr_id = self.create_carrier(self.get_value_data(carrier_data.get('carrier')))
+                except Exception as e:
+                    product_id = self.remove_record_prestashop_checked(product_obj, 'Removed Carrier',
+                                                                       {'name': 'Removed Carrier'})
+                    carr_id = self.remove_record_prestashop_checked(carrier_obj, 'Removed Carrier',
+                                                                    {'name': 'Removed Carrier',
+                                                                     'product_id': product_id.id,
+                                                                     'is_presta': True}).id
 
-                order_vals.update({'carrier_prestashop': carr_id})
-            sale_order_id = sale_order_obj.search(
-                [('presta_id', '=', order_detail.get('id')), ('prestashop_order', '=', True)], limit=1)
-            if not sale_order_id:
-                sale_order_id = sale_order_obj.create(order_vals)
-                logger.info('created orders ===> %s', sale_order_id.id)
-            if sale_order_id:
-                self.env.cr.execute(
-                    "select saleorder_id from saleorder_shop_rel where saleorder_id = %s and shop_id = %s" % (
-                        sale_order_id.id, self.id))
-                so_data = self.env.cr.fetchone()
-                if so_data == None:
-                    self.env.cr.execute("insert into saleorder_shop_rel values(%s,%s)" % (sale_order_id.id, self.id))
+            order_vals.update({'carrier_prestashop': carr_id})
+        sale_order_id = sale_order_obj.search(
+            [('presta_id', '=', order_detail.get('id')), ('prestashop_order', '=', True)], limit=1)
+        if not sale_order_id:
+            sale_order_id = sale_order_obj.create(order_vals)
+            logger.info('created orders ===> %s', sale_order_id.id)
+        if sale_order_id:
+            self.env.cr.execute(
+                "select saleorder_id from saleorder_shop_rel where saleorder_id = %s and shop_id = %s" % (
+                    sale_order_id.id, self.id))
+            so_data = self.env.cr.fetchone()
+            if so_data == None:
+                self.env.cr.execute("insert into saleorder_shop_rel values(%s,%s)" % (sale_order_id.id, self.id))
 
-            self.manageOrderLines(sale_order_id, order_detail, prestashop)
-            self.manageOrderWorkflow(sale_order_id, order_detail, state_id)
-            self.env.cr.commit()
-            return sale_order_id
-        except Exception as e:
-            if self.env.context.get('log_id'):
-                log_id = self.env.context.get('log_id')
-                self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-            else:
-                log_id_obj = self.env['prestashop.log'].create(
-                    {'all_operations': 'import_orders', 'error_lines': [(0, 0, {'log_description': str(e)})]})
-                log_id = log_id_obj.id
-            # self = self.with_context(log_id = log_id.id)
-            new_context = dict(self.env.context)
-            new_context.update({'log_id': log_id})
-            self.env.context = new_context
+        self.manageOrderLines(sale_order_id, order_detail, prestashop)
+        self.manageOrderWorkflow(sale_order_id, order_detail, state_id)
+        self.env.cr.commit()
+        return sale_order_id
+        # except Exception as e:
+        #     if self.env.context.get('log_id'):
+        #         log_id = self.env.context.get('log_id')
+        #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+        #     else:
+        #         log_id_obj = self.env['prestashop.log'].create(
+        #             {'all_operations': 'import_orders', 'error_lines': [(0, 0, {'log_description': str(e)})]})
+        #         log_id = log_id_obj.id
+        #     # self = self.with_context(log_id = log_id.id)
+        #     new_context = dict(self.env.context)
+        #     new_context.update({'log_id': log_id})
+        #     self.env.context = new_context
         return True
 
     # @api.multi
     def import_orders(self):
-        try:
-            for shop in self:
-                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                      shop.prestashop_instance_id.webservice_key or None)
-                filters = {'display': 'full', 'filter[id]': '>[%s]' % shop.last_order_id_id_import,
-                           'filter[id_shop]': '%s' % self.presta_id, 'limit': 10}
-                prestashop_order_data = prestashop.get('orders', options=filters)
-                if prestashop_order_data.get('orders') and prestashop_order_data.get('orders').get('order'):
-                    orders = prestashop_order_data.get('orders').get('order')
-                    if isinstance(orders, list):
-                        orders = orders
-                    else:
-                        orders = [orders]
-                    for order in orders:
-                        shop.create_presta_order(order, prestashop)
-                        shop.write({'last_order_id_id_import': order.get('id')})
-                    self.env.cr.commit()
-        except Exception as e:
-            raise ValidationError(_(str(e)))
+        # try:
+        for shop in self:
+            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
+                                                  shop.prestashop_instance_id.webservice_key or None)
+            filters = {'display': 'full', 'filter[id]': '>[%s]' % shop.last_order_id_id_import,
+                       'filter[id_shop]': '%s' % self.presta_id, 'limit': 10}
+            prestashop_order_data = prestashop.get('orders', options=filters)
+            if prestashop_order_data.get('orders') and prestashop_order_data.get('orders').get('order'):
+                orders = prestashop_order_data.get('orders').get('order')
+                if isinstance(orders, list):
+                    orders = orders
+                else:
+                    orders = [orders]
+                for order in orders:
+                    shop.create_presta_order(order, prestashop)
+                    shop.write({'last_order_id_id_import': order.get('id')})
+                self.env.cr.commit()
+        # except Exception as e:
+        #     raise ValidationError(_(str(e)))
         return True
 
     def create_presta_message_threads(self, thread, prestashop):
