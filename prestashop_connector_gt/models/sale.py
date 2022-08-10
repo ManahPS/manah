@@ -68,6 +68,7 @@ class sale_order(models.Model):
     order_status_update = fields.Boolean(string="To Update Order Status")
 
 
+
 class sale_order_line(models.Model):
     _inherit = 'sale.order.line'
 

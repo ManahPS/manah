@@ -17,7 +17,7 @@ class PrestashopConnectorWizard(models.Model):
     
     shop_ids = fields.Many2many('sale.shop', string="Select Shops")
     #import fields
-    import_orders = fields.Boolean('Import Orders')
+    import_orders = fields.Boolean('Import Orders.')
     import_country_state = fields.Boolean('Import Country/State')
     last_order_import_date = fields.Datetime('Last presta order Import Date')
     import_products = fields.Boolean('Import Products')

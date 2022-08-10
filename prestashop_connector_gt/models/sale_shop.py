@@ -660,6 +660,7 @@ class SaleShop(models.Model):
                 filters = {'display': 'full', 'filter[id]': '>[%s]' % self.last_country_id_import, 'limit': 1000}
                 state_filters = {'display': 'full', 'filter[id]': '>[%s]' % self.last_state_id_import, 'limit': 1000}
                 prestashop_country_data = prestashop.get('countries', options=filters)
+                print('\nprestashop_country_data+++++++++', prestashop_country_data)
                 # import country
                 if 'country' in prestashop_country_data.get('countries'):
                     country_list = prestashop_country_data.get('countries').get('country')
@@ -680,6 +681,7 @@ class SaleShop(models.Model):
                         self.env.cr.commit()
 
                 prestashop_state_data = prestashop.get('states', options=state_filters)
+                print('\nprestashop_state_data+++++++++', prestashop_state_data)
                 if 'state' in prestashop_state_data.get('states'):
                     state_list = prestashop_state_data.get('states').get('state')
                     if isinstance(state_list, list):
@@ -930,324 +932,325 @@ class SaleShop(models.Model):
 
         print('\nproduct_dict+++full+++++++', product_dict)
 
-        # try:
-        manufacturers_id = supplier_id = False
-        prd_tmp_vals = {
-            'name': self.action_check_isinstance(product_dict.get('name').get('language'))[0].get('value'),
-            'detailed_type': 'product',
-            'list_price': product_dict.get('price'),
-            'default_code': product_dict.get('reference'),
-            'prestashop_product': True,
-            'taxes_id': False,
-            'wholesale_price': product_dict.get('wholesale_price'),
-            'website_description': self.action_check_isinstance(product_dict.get('description').get('language'))[
-                0].get('value'),
-            'standard_price': product_dict.get('wholesale_price'),
-            'product_onsale': product_dict.get('on_sale'),
-            # 'product_instock': self.get_value(product_dict.get('available_now').get('language')),
-            'product_lngth': product_dict.get('depth'),
-            'product_width': product_dict.get('width'),
-            'product_wght': product_dict.get('weight'),
-            'product_hght': product_dict.get('height'),
-            'presta_id': product_dict.get('id'),
+        try:
+            manufacturers_id = supplier_id = False
+            prd_tmp_vals = {
+                'name': self.action_check_isinstance(product_dict.get('name').get('language'))[0].get('value'),
+                'detailed_type': 'product',
+                'list_price': product_dict.get('price'),
+                'default_code': product_dict.get('reference'),
+                'prestashop_product': True,
+                'taxes_id': False,
+                'wholesale_price': product_dict.get('wholesale_price'),
+                'website_description': self.action_check_isinstance(product_dict.get('description').get('language'))[
+                    0].get('value'),
+                'standard_price': product_dict.get('wholesale_price'),
+                'product_onsale': product_dict.get('on_sale'),
+                # 'product_instock': self.get_value(product_dict.get('available_now').get('language')),
+                'product_lngth': product_dict.get('depth'),
+                'product_width': product_dict.get('width'),
+                'product_wght': product_dict.get('weight'),
+                'product_hght': product_dict.get('height'),
+                'presta_id': product_dict.get('id'),
 
-        }
-        if product_dict.get('id_tax_rules_group') not in ['0', '']:
-            tax_group_id = account_tax_group_obj.search(
-                [('presta_id', '=', product_dict.get('id_tax_rules_group'))], limit=1)
-            prd_tmp_vals.update({'tax_group_id': tax_group_id.id})
+            }
+            if product_dict.get('id_tax_rules_group') not in ['0', '']:
+                tax_group_id = account_tax_group_obj.search(
+                    [('presta_id', '=', product_dict.get('id_tax_rules_group'))], limit=1)
+                prd_tmp_vals.update({'tax_group_id': tax_group_id.id})
 
-        feature_value_list = []
-        if product_dict.get('associations').get('product_features').get('product_feature'):
+            feature_value_list = []
+            if product_dict.get('associations').get('product_features').get('product_feature'):
 
-            prestashop_product_feature_list = product_dict.get('associations').get('product_features').get('product_feature')
-            prestashop_product_feature_list = self.action_check_isinstance(prestashop_product_feature_list)
+                prestashop_product_feature_list = product_dict.get('associations').get('product_features').get(
+                    'product_feature')
+                prestashop_product_feature_list = self.action_check_isinstance(prestashop_product_feature_list)
 
-            for data in prestashop_product_feature_list:
-                print('data+++++++++++++++++', data)
-                if data.get('id') != '0' and data.get('id_feature_value') != '0':
-                    feature_id = data.get('id')
-                    feature_value_id = data.get('id_feature_value')
-                    feature = product_feature_obj.search([('presta_id', '=', feature_id)], limit=1)
-                    feature_value = product_feature_value_obj.search([('presta_id', '=', feature_value_id)], limit=1)
-                    feature_vals = (0, 0, {
-                        'feature': feature.id,
-                        'feature_value': feature_value.id,
-                    })
-                    feature_value_list.append(feature_vals)
-            print('feature_value_list+++++++++++', feature_value_list)
-        if feature_value_list:
-            prd_tmp_vals.update({'product_spec_ids': feature_value_list})
+                for data in prestashop_product_feature_list:
+                    print('data+++++++++++++++++', data)
+                    if data.get('id') != '0' and data.get('id_feature_value') != '0':
+                        feature_id = data.get('id')
+                        feature_value_id = data.get('id_feature_value')
+                        feature = product_feature_obj.search([('presta_id', '=', feature_id)], limit=1)
+                        feature_value = product_feature_value_obj.search([('presta_id', '=', feature_value_id)], limit=1)
+                        feature_vals = (0, 0, {
+                            'feature': feature.id,
+                            'feature_value': feature_value.id,
+                        })
+                        feature_value_list.append(feature_vals)
+                print('feature_value_list+++++++++++', feature_value_list)
+            if feature_value_list:
+                prd_tmp_vals.update({'product_spec_ids': feature_value_list})
 
-        if product_dict.get('id_category_default'):
-            domain_categ = [('presta_id', '=', product_dict.get('id_category_default')), ('is_presta', '=', True),
-                            ('active', '=', True)]
-            cate_id = self.search_record_in_odoo(product_categ_obj, domain_categ)
-            if cate_id:
-                prd_tmp_vals.update({'categ_id': cate_id.id})
+            if product_dict.get('id_category_default'):
+                domain_categ = [('presta_id', '=', product_dict.get('id_category_default')), ('is_presta', '=', True),
+                                ('active', '=', True)]
+                cate_id = self.search_record_in_odoo(product_categ_obj, domain_categ)
+                if cate_id:
+                    prd_tmp_vals.update({'categ_id': cate_id.id})
 
-        if product_dict.get('ean13') not in ['0', '']:
-            check_product = False
-            if self.prestashop_instance_id.mapped_product_by == 'default_code' or self.prestashop_instance_id.mapped_product_by == 'presta_id':
-                check_product = prod_prod_obj.search([('barcode', '=', product_dict.get('ean13'))], limit=1)
-            if not check_product:
-                prd_tmp_vals.update({'barcode': product_dict.get('ean13')})
-            else:
-                log_id_obj = self.env['prestashop.log'].create(
-                    {'log_name': 'Barcode : ' + str(product_dict.get('ean13')) + 'Already present',
-                     'all_operations': 'import_products', 'error_lines': [(0, 0, {
-                        'log_description': 'existing in Odoo Internal ref: ' + str(check_product.default_code)}), (
-                                                                              0, 0, {
-                                                                                  'log_description': ' New trying create product Internal ref: ' + str(
-                                                                                      check_product.default_code)})]})
-        # get manufacturer id if not in odoo create
-        if product_dict.get('id_manufacturer') != '0':
-            manufacturers_id = res_partner_obj.search(
-                [('presta_id', '=', product_dict.get('id_manufacturer')), ('manufacturer', '=', True)], limit=1)
-            if not manufacturers_id:
-                try:
-                    manufacturer_detail = prestashop.get('manufacturers', product_dict.get('id_manufacturer'))
-                    manufact_id = self.create_presta_manufacturers(manufacturer_detail.get('manufacturer'))
-                    if manufact_id:
-                        manufacturers_id = manufact_id.id
-                except Exception as e:
-                    manufacturers_id = False
-            else:
-                manufacturers_id = manufacturers_id.id
-        prd_tmp_vals.update({'manufacturer_id': manufacturers_id})
-
-        # get supplier id if not in odoo create
-        if product_dict.get('id_supplier') != '0':
-            supplier_id = res_partner_obj.search(
-                [('presta_id', '=', product_dict.get('id_supplier')), ('prestashop_supplier', '=', True)], limit=1)
-            if supplier_id:
-                supplier_id = supplier_id.id
-            else:
-                try:
-                    supplier_detail = prestashop.get('suppliers', product_dict.get('id_supplier'))
-                    supply_id = self.create_presta_supplier(supplier_detail.get('supplier'))
-                    if supply_id:
-                        supplier_id = supply_id.id
-                except Exception as e:
-                    supplier_id = False
-        # if supplier_id:
-        # 	prd_tmp_vals.update({'supplier_id': supplier_id})
-        # 	prd_tmp_vals.update({'seller_ids': [(0, 0, {'name': supplier_id})]})
-        if product_dict.get('associations'):
-            attribute_line_ids, atttibute_lines_dict = [], {}
-            if product_dict.get('associations').get('product_option_values'):
-                if product_dict.get('associations').get('product_option_values').get('product_option_value'):
-                    data = product_dict.get('associations').get('product_option_values').get('product_option_value')
+            if product_dict.get('ean13') not in ['0', '']:
+                check_product = False
+                if self.prestashop_instance_id.mapped_product_by == 'default_code' or self.prestashop_instance_id.mapped_product_by == 'presta_id':
+                    check_product = prod_prod_obj.search([('barcode', '=', product_dict.get('ean13'))], limit=1)
+                if not check_product:
+                    prd_tmp_vals.update({'barcode': product_dict.get('ean13')})
                 else:
-                    data = product_dict.get('associations').get('product_option_values')
-                if data:
-                    if isinstance(data, dict):
-                        data = [data]
-                    for att_val in data:
-                        if att_val.get('value') in ('', '0'):
-                            continue
-                        value_id = att_val_obj.search([('presta_id', '=', self.get_value_data(att_val.get('id')))],
-                                                      limit=1)
-                        if not value_id:
-                            try:
-                                values_data = prestashop.get('product_option_values',
-                                                             self.get_value_data(att_val.get('id')))
-                                self._create_attribute_values(values_data.get('product_option_value'), prestashop)
-                                self.env.cr.commit()
-                            except Exception as e:
-                                value_id = False
-                            value_id = att_val_obj.search(
-                                [('presta_id', '=', self.get_value_data(att_val.get('id')))], limit=1)
-                        if value_id:
-                            if value_id.attribute_id.id in atttibute_lines_dict:
-                                if value_id.id not in atttibute_lines_dict.get(value_id.attribute_id.id):
-                                    atttibute_lines_dict.get(value_id.attribute_id.id).append(value_id.id)
-                            else:
-
-                                atttibute_lines_dict.update({value_id.attribute_id.id: [value_id.id]})
-                    for i in atttibute_lines_dict.keys():
-                        attribute_line_ids.append(
-                            (0, 0, {'attribute_id': i, 'value_ids': [(6, 0, atttibute_lines_dict.get(i))]}))
-                    prd_tmp_vals.update({'attribute_line_ids': attribute_line_ids})
-        product_domain = []
-        if self.prestashop_instance_id.mapped_product_by == 'default_code':
-            product_domain.append(('default_code', '=', prd_tmp_vals.get('default_code')))
-        elif self.prestashop_instance_id.mapped_product_by == 'barcode':
-            product_domain.append(('barcode', '=', prd_tmp_vals.get('barcode')))
-        else:
-            product_domain.append(('presta_id', '=', self.get_value_data(product_dict.get('id'))))
-        prod_id = prod_temp_obj.search(product_domain, limit=1)
-        if not prod_id:
-
-            prod_id = prod_temp_obj.create(prd_tmp_vals)
-        else:
-            if prd_tmp_vals.get('attribute_line_ids'):
-                prd_tmp_vals.pop('attribute_line_ids')
-            prod_id.write(prd_tmp_vals)
-            prd_tmp_vals.update({'attribute_line_ids': attribute_line_ids})
-        self.env.cr.commit()
-        if prod_id:
-            if supplier_id:
-                temp_supplier = product_supplier_info_obj.search(
-                    [('product_tmpl_id', '=', prod_id.id), ('name', '=', supplier_id)])
-                if not temp_supplier:
-                    product_supplier_info_obj.create({'name': supplier_id, 'product_tmpl_id': prod_id.id})
-            # Image create/write
-            img_ids = product_dict.get('associations').get('images').get('image', False)
-            if img_ids:
-                if isinstance(img_ids, list):
-                    img_ids = img_ids
+                    log_id_obj = self.env['prestashop.log'].create(
+                        {'log_name': 'Barcode : ' + str(product_dict.get('ean13')) + 'Already present',
+                         'all_operations': 'import_products', 'error_lines': [(0, 0, {
+                            'log_description': 'existing in Odoo Internal ref: ' + str(check_product.default_code)}), (
+                                                                                  0, 0, {
+                                                                                      'log_description': ' New trying create product Internal ref: ' + str(
+                                                                                          check_product.default_code)})]})
+            # get manufacturer id if not in odoo create
+            if product_dict.get('id_manufacturer') != '0':
+                manufacturers_id = res_partner_obj.search(
+                    [('presta_id', '=', product_dict.get('id_manufacturer')), ('manufacturer', '=', True)], limit=1)
+                if not manufacturers_id:
+                    try:
+                        manufacturer_detail = prestashop.get('manufacturers', product_dict.get('id_manufacturer'))
+                        manufact_id = self.create_presta_manufacturers(manufacturer_detail.get('manufacturer'))
+                        if manufact_id:
+                            manufacturers_id = manufact_id.id
+                    except Exception as e:
+                        manufacturers_id = False
                 else:
-                    img_ids = [img_ids]
-                for image in img_ids:
-                    if image.get('id') != '0':
-                        loc = (self.prestashop_instance_id.location).split('//')
-                        url = "http://" + self.prestashop_instance_id.webservice_key + "@" + loc[
-                            1] + '/api/images/products/' + product_dict.get('id') + '/' + image.get('id')
-                        client = PrestaShopWebServiceImage(self.prestashop_instance_id.location,
-                                                           self.prestashop_instance_id.webservice_key)
-                        res = client.get_image(url)
-                        if res.get('image_content'):
-                            img_test = res.get('image_content').decode('utf-8')
-                            extention = res.get('type')
-                            if img_test:
-                                product_img_id = product_image_obj.search(
-                                    [('prest_img_id', '=', int(image.get('id'))),
-                                     ('product_t_id', '=', prod_id.id)])
-                                if not product_img_id:
-                                    is_default_img = False
-                                    if product_dict.get('id_default_image').get('value') is not None:
-                                        is_default_img = True
-                                        prod_id.write({'image_1920': img_test})
-                                    img_vals = (
-                                        {'is_default_img': is_default_img, 'extention': extention, 'image_url': url,
-                                         'image': img_test, 'prest_img_id': int(image.get('id')), 'name': ' ',
-                                         'product_t_id': prod_id.id})
-                                    product_image_obj.create(img_vals)
-            # 	# write attributes
-            if prd_tmp_vals.get('attribute_line_ids'):
-                for each in prd_tmp_vals.get('attribute_line_ids'):
-                    attribute_ids = self.env['product.template.attribute.line'].search(
-                        [('product_tmpl_id', '=', prod_id.id), ('attribute_id', '=', each[2].get('attribute_id'))])
-                    if attribute_ids:
-                        for val_at in each[2].get('value_ids')[0][2]:
-                            if val_at not in attribute_ids[0].value_ids.ids:
-                                attribute_ids[0].write({'value_ids': [(6, 0, [val_at])]})
+                    manufacturers_id = manufacturers_id.id
+            prd_tmp_vals.update({'manufacturer_id': manufacturers_id})
+
+            # get supplier id if not in odoo create
+            if product_dict.get('id_supplier') != '0':
+                supplier_id = res_partner_obj.search(
+                    [('presta_id', '=', product_dict.get('id_supplier')), ('prestashop_supplier', '=', True)], limit=1)
+                if supplier_id:
+                    supplier_id = supplier_id.id
+                else:
+                    try:
+                        supplier_detail = prestashop.get('suppliers', product_dict.get('id_supplier'))
+                        supply_id = self.create_presta_supplier(supplier_detail.get('supplier'))
+                        if supply_id:
+                            supplier_id = supply_id.id
+                    except Exception as e:
+                        supplier_id = False
+            # if supplier_id:
+            # 	prd_tmp_vals.update({'supplier_id': supplier_id})
+            # 	prd_tmp_vals.update({'seller_ids': [(0, 0, {'name': supplier_id})]})
+            if product_dict.get('associations'):
+                attribute_line_ids, atttibute_lines_dict = [], {}
+                if product_dict.get('associations').get('product_option_values'):
+                    if product_dict.get('associations').get('product_option_values').get('product_option_value'):
+                        data = product_dict.get('associations').get('product_option_values').get('product_option_value')
                     else:
-                        self.env['product.template.attribute.line'].create(
-                            {'attribute_id': each[2].get('attribute_id'), 'product_tmpl_id': prod_id.id,
-                             'value_ids': each[2].get('value_ids')})
+                        data = product_dict.get('associations').get('product_option_values')
+                    if data:
+                        if isinstance(data, dict):
+                            data = [data]
+                        for att_val in data:
+                            if att_val.get('value') in ('', '0'):
+                                continue
+                            value_id = att_val_obj.search([('presta_id', '=', self.get_value_data(att_val.get('id')))],
+                                                          limit=1)
+                            if not value_id:
+                                try:
+                                    values_data = prestashop.get('product_option_values',
+                                                                 self.get_value_data(att_val.get('id')))
+                                    self._create_attribute_values(values_data.get('product_option_value'), prestashop)
+                                    self.env.cr.commit()
+                                except Exception as e:
+                                    value_id = False
+                                value_id = att_val_obj.search(
+                                    [('presta_id', '=', self.get_value_data(att_val.get('id')))], limit=1)
+                            if value_id:
+                                if value_id.attribute_id.id in atttibute_lines_dict:
+                                    if value_id.id not in atttibute_lines_dict.get(value_id.attribute_id.id):
+                                        atttibute_lines_dict.get(value_id.attribute_id.id).append(value_id.id)
+                                else:
+
+                                    atttibute_lines_dict.update({value_id.attribute_id.id: [value_id.id]})
+                        for i in atttibute_lines_dict.keys():
+                            attribute_line_ids.append(
+                                (0, 0, {'attribute_id': i, 'value_ids': [(6, 0, atttibute_lines_dict.get(i))]}))
+                        prd_tmp_vals.update({'attribute_line_ids': attribute_line_ids})
+            product_domain = []
+            if self.prestashop_instance_id.mapped_product_by == 'default_code':
+                product_domain.append(('default_code', '=', prd_tmp_vals.get('default_code')))
+            elif self.prestashop_instance_id.mapped_product_by == 'barcode':
+                product_domain.append(('barcode', '=', prd_tmp_vals.get('barcode')))
+            else:
+                product_domain.append(('presta_id', '=', self.get_value_data(product_dict.get('id'))))
+            prod_id = prod_temp_obj.search(product_domain, limit=1)
+            if not prod_id:
+
+                prod_id = prod_temp_obj.create(prd_tmp_vals)
+            else:
                 if prd_tmp_vals.get('attribute_line_ids'):
                     prd_tmp_vals.pop('attribute_line_ids')
-
-            prod_id.write({'product_spec_ids': False})
-            prod_id.write(prd_tmp_vals)
-
-            self.env.cr.execute(
-                "select product_id from product_templ_shop_rel where product_id = %s and shop_id = %s" % (
-                    prod_id.id, self.id))
-            prod_data = self.env.cr.fetchone()
-            if prod_data == None:
-                self.env.cr.execute("insert into product_templ_shop_rel values(%s,%s)" % (prod_id.id, self.id))
-            logger.info('Producrt Created ===> %s', prod_id.id)
-            self.env.cr.execute(
-                "select product_id from product_templ_shop_rel where product_id = %s and shop_id = %s" % (
-                    prod_id.id, self.id))
-            prod_data = self.env.cr.fetchone()
-            if prod_data == None:
-                q1 = "insert into product_templ_shop_rel values(%s,%s)" % (prod_id.id, self.id)
-                self.env.cr.execute(q1)
-            if product_dict.get('associations').get('combinations').get('combination', False):
-                comb_l = product_dict.get('associations').get('combinations').get('combination', False)
-                c_val = {}
-                if comb_l:
-                    if isinstance(comb_l, list):
-                        comb_l = comb_l
+                prod_id.write(prd_tmp_vals)
+                prd_tmp_vals.update({'attribute_line_ids': attribute_line_ids})
+            self.env.cr.commit()
+            if prod_id:
+                if supplier_id:
+                    temp_supplier = product_supplier_info_obj.search(
+                        [('product_tmpl_id', '=', prod_id.id), ('name', '=', supplier_id)])
+                    if not temp_supplier:
+                        product_supplier_info_obj.create({'name': supplier_id, 'product_tmpl_id': prod_id.id})
+                # Image create/write
+                img_ids = product_dict.get('associations').get('images').get('image', False)
+                if img_ids:
+                    if isinstance(img_ids, list):
+                        img_ids = img_ids
                     else:
-                        comb_l = [comb_l]
+                        img_ids = [img_ids]
+                    for image in img_ids:
+                        if image.get('id') != '0':
+                            loc = (self.prestashop_instance_id.location).split('//')
+                            url = "http://" + self.prestashop_instance_id.webservice_key + "@" + loc[
+                                1] + '/api/images/products/' + product_dict.get('id') + '/' + image.get('id')
+                            client = PrestaShopWebServiceImage(self.prestashop_instance_id.location,
+                                                               self.prestashop_instance_id.webservice_key)
+                            res = client.get_image(url)
+                            if res.get('image_content'):
+                                img_test = res.get('image_content').decode('utf-8')
+                                extention = res.get('type')
+                                if img_test:
+                                    product_img_id = product_image_obj.search(
+                                        [('prest_img_id', '=', int(image.get('id'))),
+                                         ('product_t_id', '=', prod_id.id)])
+                                    if not product_img_id:
+                                        is_default_img = False
+                                        if product_dict.get('id_default_image').get('value') is not None:
+                                            is_default_img = True
+                                            prod_id.write({'image_1920': img_test})
+                                        img_vals = (
+                                            {'is_default_img': is_default_img, 'extention': extention, 'image_url': url,
+                                             'image': img_test, 'prest_img_id': int(image.get('id')), 'name': ' ',
+                                             'product_t_id': prod_id.id})
+                                        product_image_obj.create(img_vals)
+                # 	# write attributes
+                if prd_tmp_vals.get('attribute_line_ids'):
+                    for each in prd_tmp_vals.get('attribute_line_ids'):
+                        attribute_ids = self.env['product.template.attribute.line'].search(
+                            [('product_tmpl_id', '=', prod_id.id), ('attribute_id', '=', each[2].get('attribute_id'))])
+                        if attribute_ids:
+                            for val_at in each[2].get('value_ids')[0][2]:
+                                if val_at not in attribute_ids[0].value_ids.ids:
+                                    attribute_ids[0].write({'value_ids': [(6, 0, [val_at])]})
+                        else:
+                            self.env['product.template.attribute.line'].create(
+                                {'attribute_id': each[2].get('attribute_id'), 'product_tmpl_id': prod_id.id,
+                                 'value_ids': each[2].get('value_ids')})
+                    if prd_tmp_vals.get('attribute_line_ids'):
+                        prd_tmp_vals.pop('attribute_line_ids')
 
-                    for comb in comb_l:
-                        try:
-                            combination_dict = prestashop.get('combinations', self.get_value_data(comb.get('id')))
-                            value_list = []
-                            value_comb_ids = combination_dict.get('combination').get('associations').get(
-                                'product_option_values').get('product_option_value')
-                            if value_comb_ids:
-                                if isinstance(value_comb_ids, list):
-                                    value_comb_ids = value_comb_ids
-                                else:
-                                    value_comb_ids = [value_comb_ids]
-                                # print "value_comb_ids",value_comb_ids
-                                for each in value_comb_ids:
-                                    val_id = self.get_value_data(each.get('id'))
-                                    value_list.append(val_id)
-                                prest_product_id = self.get_value_data(
-                                    combination_dict.get('combination').get('id_product'))
-                                product_ids = prod_prod_obj.search(
-                                    [('product_tmpl_id.presta_id', '=', prest_product_id)])
-                                prod_id_var = False
-                                if product_ids:
-                                    for product_data in product_ids:
-                                        prod_val_ids = product_data.product_template_attribute_value_ids.product_attribute_value_id
-                                        k = []
-                                        for red in prod_val_ids:
-                                            k.append(red.presta_id)
-                                        res = k
-                                        rles = sorted(res, key=int)
-                                        t = self.get_value_data(value_list)
-                                        imag_odoo_data = False
-                                        if rles == t:
-                                            img_ids = combination_dict.get('combination').get('associations').get(
-                                                'images').get('image', False)
-                                            if img_ids:
-                                                if isinstance(img_ids, list):
-                                                    img_ids = img_ids
-                                                else:
-                                                    img_ids = [img_ids]
-                                                for image in img_ids:
-                                                    if image.get('id') != '0':
-                                                        imag_odoo_data = self.return_image_data(prestashop,
-                                                                                                product_data.product_tmpl_id.id,
-                                                                                                prest_product_id,
-                                                                                                image.get('id'))
-                                            product_barcode = False
-                                            if self.get_value_data(
-                                                    combination_dict.get('combination').get('ean13')) not in ['',
-                                                                                                              '0']:
-                                                product_barcode = self.get_value_data(
-                                                    combination_dict.get('combination').get('ean13'))
-                                            c_val.update({
-                                                'default_code': self.get_value_data(
-                                                    combination_dict.get('combination').get('reference')),
+                prod_id.write({'product_spec_ids': False})
+                prod_id.write(prd_tmp_vals)
 
-                                                'combination_id': self.get_value_data(
-                                                    combination_dict.get('combination').get('id')),
+                self.env.cr.execute(
+                    "select product_id from product_templ_shop_rel where product_id = %s and shop_id = %s" % (
+                        prod_id.id, self.id))
+                prod_data = self.env.cr.fetchone()
+                if prod_data == None:
+                    self.env.cr.execute("insert into product_templ_shop_rel values(%s,%s)" % (prod_id.id, self.id))
+                logger.info('Producrt Created ===> %s', prod_id.id)
+                self.env.cr.execute(
+                    "select product_id from product_templ_shop_rel where product_id = %s and shop_id = %s" % (
+                        prod_id.id, self.id))
+                prod_data = self.env.cr.fetchone()
+                if prod_data == None:
+                    q1 = "insert into product_templ_shop_rel values(%s,%s)" % (prod_id.id, self.id)
+                    self.env.cr.execute(q1)
+                if product_dict.get('associations').get('combinations').get('combination', False):
+                    comb_l = product_dict.get('associations').get('combinations').get('combination', False)
+                    c_val = {}
+                    if comb_l:
+                        if isinstance(comb_l, list):
+                            comb_l = comb_l
+                        else:
+                            comb_l = [comb_l]
 
-                                            })
-                                            if imag_odoo_data:
+                        for comb in comb_l:
+                            try:
+                                combination_dict = prestashop.get('combinations', self.get_value_data(comb.get('id')))
+                                value_list = []
+                                value_comb_ids = combination_dict.get('combination').get('associations').get(
+                                    'product_option_values').get('product_option_value')
+                                if value_comb_ids:
+                                    if isinstance(value_comb_ids, list):
+                                        value_comb_ids = value_comb_ids
+                                    else:
+                                        value_comb_ids = [value_comb_ids]
+                                    # print "value_comb_ids",value_comb_ids
+                                    for each in value_comb_ids:
+                                        val_id = self.get_value_data(each.get('id'))
+                                        value_list.append(val_id)
+                                    prest_product_id = self.get_value_data(
+                                        combination_dict.get('combination').get('id_product'))
+                                    product_ids = prod_prod_obj.search(
+                                        [('product_tmpl_id.presta_id', '=', prest_product_id)])
+                                    prod_id_var = False
+                                    if product_ids:
+                                        for product_data in product_ids:
+                                            prod_val_ids = product_data.product_template_attribute_value_ids.product_attribute_value_id
+                                            k = []
+                                            for red in prod_val_ids:
+                                                k.append(red.presta_id)
+                                            res = k
+                                            rles = sorted(res, key=int)
+                                            t = self.get_value_data(value_list)
+                                            imag_odoo_data = False
+                                            if rles == t:
+                                                img_ids = combination_dict.get('combination').get('associations').get(
+                                                    'images').get('image', False)
+                                                if img_ids:
+                                                    if isinstance(img_ids, list):
+                                                        img_ids = img_ids
+                                                    else:
+                                                        img_ids = [img_ids]
+                                                    for image in img_ids:
+                                                        if image.get('id') != '0':
+                                                            imag_odoo_data = self.return_image_data(prestashop,
+                                                                                                    product_data.product_tmpl_id.id,
+                                                                                                    prest_product_id,
+                                                                                                    image.get('id'))
+                                                product_barcode = False
+                                                if self.get_value_data(
+                                                        combination_dict.get('combination').get('ean13')) not in ['',
+                                                                                                                  '0']:
+                                                    product_barcode = self.get_value_data(
+                                                        combination_dict.get('combination').get('ean13'))
                                                 c_val.update({
-                                                    'image_1920': imag_odoo_data.image
+                                                    'default_code': self.get_value_data(
+                                                        combination_dict.get('combination').get('reference')),
+
+                                                    'combination_id': self.get_value_data(
+                                                        combination_dict.get('combination').get('id')),
+
                                                 })
-                                            product_data.product_template_attribute_value_ids.write({
-                                                'price_extra': self.get_value_data(
-                                                    combination_dict.get(
-                                                        'combination').get(
-                                                        'price'))})
-                                            product_data.write(c_val)
-                        except Exception as e:
-                            continue
-                self.env.cr.commit()
-        # except Exception as e:
-        #     if self.env.context.get('log_id'):
-        #         log_id = self.env.context.get('log_id')
-        #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-        #     else:
-        #         log_id_obj = self.env['prestashop.log'].create(
-        #             {'all_operations': 'import_products', 'error_lines': [(0, 0, {'log_description': str(e), })]})
-        #         log_id = log_id_obj.id
-        #     new_context = dict(self.env.context)
-        #     new_context.update({'log_id': log_id})
-        #     self.env.context = new_context
+                                                if imag_odoo_data:
+                                                    c_val.update({
+                                                        'image_1920': imag_odoo_data.image
+                                                    })
+                                                product_data.product_template_attribute_value_ids.write({
+                                                    'price_extra': self.get_value_data(
+                                                        combination_dict.get(
+                                                            'combination').get(
+                                                            'price'))})
+                                                product_data.write(c_val)
+                            except Exception as e:
+                                continue
+                    self.env.cr.commit()
+        except Exception as e:
+            if self.env.context.get('log_id'):
+                log_id = self.env.context.get('log_id')
+                self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+            else:
+                log_id_obj = self.env['prestashop.log'].create(
+                    {'all_operations': 'import_products', 'error_lines': [(0, 0, {'log_description': str(e), })]})
+                log_id = log_id_obj.id
+            new_context = dict(self.env.context)
+            new_context.update({'log_id': log_id})
+            self.env.context = new_context
         return True
 
     def return_image_data(self, prestashop, product_id, product_presta_id, img_id):
@@ -1291,48 +1294,47 @@ class SaleShop(models.Model):
     # @api.multi
     def import_products(self):
         for shop in self:
-            # try:
-            product_categ_obj = self.env['product.category']
-            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                  shop.prestashop_instance_id.webservice_key or None)
-            filters = {'display': 'full', 'filter[id]': '>[%s]' % self.last_product_id_import, 'limit': 100}
-            # filters = {'display': 'full', 'limit': 1000}
-            prestashop_product_data = prestashop.get('products', options=filters)
-            # prestashop_product_data = prestashop.get('product_features', options=filters)
-            # print('\nprestashop_product_data+++++++++++', prestashop_product_data)
+            try:
+                product_categ_obj = self.env['product.category']
+                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
+                                                      shop.prestashop_instance_id.webservice_key or None)
+                filters = {'display': 'full', 'filter[id]': '>[%s]' % self.last_product_id_import, 'limit': 100}
+                # filters = {'display': 'full', 'limit': 1000}
+                prestashop_product_data = prestashop.get('products', options=filters)
+                # prestashop_product_data = prestashop.get('product_features', options=filters)
+                # print('\nprestashop_product_data+++++++++++', prestashop_product_data)
 
-            if prestashop_product_data.get('products') and prestashop_product_data.get('products').get('product'):
-                prestashop_product_list = prestashop_product_data.get('products').get('product')
-                prestashop_product_list = self.action_check_isinstance(prestashop_product_list)
-                for product_dict in prestashop_product_list:
-                    if product_dict.get('id_category_default'):
-                        domain_categ = [('presta_id', '=', product_dict.get('id_category_default')),
-                                        ('is_presta', '=', True)]
-                        cate_id = self.search_record_in_odoo(product_categ_obj, domain_categ)
-                        if not cate_id:
-                            try:
-                                parent_presta_categ_data = prestashop.get('categories',
-                                                                          product_dict.get('id_category_default'))
-                                shop.create_presta_category(parent_presta_categ_data.get('category'), prestashop)
-                                self.env.cr.commit()
-                            except Exception as e:
-                                logger.info('Parent category ===> %s' % (e))
-                    shop.create_presta_product(product_dict, prestashop)
-                    shop.write({'last_product_id_import': product_dict.get('id')})
-                    self.env.cr.commit()
-
-    # 	except Exception as e:
-    # 		if self.env.context.get('log_id'):
-    # 			log_id = self.env.context.get('log_id')
-    # 			self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-    # 		else:
-    # 			log_id_obj = self.env['prestashop.log'].create(
-    # 				{'all_operations': 'import_products', 'error_lines': [(0, 0, {'log_description': str(e), })]})
-    # 			log_id = log_id_obj.id
-    # 		new_context = dict(self.env.context)
-    # 		new_context.update({'log_id': log_id})
-    # 		self.env.context = new_context
-    # return True
+                if prestashop_product_data.get('products') and prestashop_product_data.get('products').get('product'):
+                    prestashop_product_list = prestashop_product_data.get('products').get('product')
+                    prestashop_product_list = self.action_check_isinstance(prestashop_product_list)
+                    for product_dict in prestashop_product_list:
+                        if product_dict.get('id_category_default'):
+                            domain_categ = [('presta_id', '=', product_dict.get('id_category_default')),
+                                            ('is_presta', '=', True)]
+                            cate_id = self.search_record_in_odoo(product_categ_obj, domain_categ)
+                            if not cate_id:
+                                try:
+                                    parent_presta_categ_data = prestashop.get('categories',
+                                                                              product_dict.get('id_category_default'))
+                                    shop.create_presta_category(parent_presta_categ_data.get('category'), prestashop)
+                                    self.env.cr.commit()
+                                except Exception as e:
+                                    logger.info('Parent category ===> %s' % (e))
+                        shop.create_presta_product(product_dict, prestashop)
+                        shop.write({'last_product_id_import': product_dict.get('id')})
+                        self.env.cr.commit()
+            except Exception as e:
+                if self.env.context.get('log_id'):
+                    log_id = self.env.context.get('log_id')
+                    self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+                else:
+                    log_id_obj = self.env['prestashop.log'].create(
+                        {'all_operations': 'import_products', 'error_lines': [(0, 0, {'log_description': str(e), })]})
+                    log_id = log_id_obj.id
+                new_context = dict(self.env.context)
+                new_context.update({'log_id': log_id})
+                self.env.context = new_context
+        return True
 
     def createInventory(self, stock, lot_stock_id, prestashop):
         product_obj = self.env['product.product']
@@ -1617,6 +1619,7 @@ class SaleShop(models.Model):
             else:
                 order_rows = [order_rows]
             for child in order_rows:
+                print('\nchild++++++', child)
                 line = {
                     'price_unit': float(self.get_value_data(child.get('unit_price_tax_excl'))),
                     'name': self.get_value_data(child.get('product_name')),
@@ -1679,11 +1682,15 @@ class SaleShop(models.Model):
                     product_id = product_obj.search(
                         [('product_tmpl_id.presta_id', '=', self.get_value_data(child.get('product_id'))),
                          ('prestashop_product', '=', True)], limit=1)
+                    print('\nproduct_id+++++++++++', product_id)
                     if product_id:
+                        print('if')
                         group_tax_id = product_id.tax_group_id
                         line.update({'product_id': product_id.id, 'product_uom': product_id.uom_id.id})
                     else:
                         try:
+                            print('else try')
+                            print('inside try product_id', self.get_value_data(child.get('product_id')))
                             new_product_data = prestashop.get('products', self.get_value_data(child.get('product_id')))
                             self.create_presta_product(new_product_data.get('product'), prestashop)
                             self.env.cr.commit()
@@ -1693,10 +1700,14 @@ class SaleShop(models.Model):
                             line.update(
                                 {'product_id': new_product_ids[0].id, 'product_uom': new_product_ids[0].uom_id.id})
                         except:
+                            print('inside except')
                             product_id = self.remove_record_prestashop_checked(prod_templ_obj, 'Removed Product',
                                                                                {'name': 'Removed Product'})
-                            group_tax_id = product_id.tax_group_id
-                            line.update({'product_id': product_id.id, 'product_uom': product_id.uom_id.id})
+                            print('created product_id+++++++++', product_id, product_id.id, product_id.name)
+                            new_prp = product_obj.search([('name', '=', product_id.name)])
+                            print('new_prp+++++++++++', new_prp)
+                            group_tax_id = new_prp.tax_group_id
+                            line.update({'product_id': new_prp.id, 'product_uom': new_prp.uom_id.id})
                 if 'product_id' not in line:
                     product_id = self.remove_record_prestashop_checked(prod_templ_obj, 'Removed Product',
                                                                        {'name': 'Removed Product'})
@@ -1768,9 +1779,15 @@ class SaleShop(models.Model):
     # @api.one
 
     def remove_record_prestashop_checked(self, brows_object, name, vals):
+        print('brows_object++++++++', brows_object)
+        print('name++++++++', name)
+        print('vals++++++++', vals)
         record_id = brows_object.search([('name', '=', name)], limit=1)
+        print('record_id++++++++++', record_id)
         if not record_id:
             record_id = brows_object.create(vals)
+            print('record_id++++++++', record_id)
+        self.env.cr.commit()
         return record_id
 
     def create_presta_order(self, order_detail, prestashop):
@@ -1780,149 +1797,149 @@ class SaleShop(models.Model):
         product_obj = self.env['product.product']
         status_obj = self.env['presta.order.status']
         order_vals = {}
-        try:
-            id_customer = res_partner_obj.search(
-                [('presta_id', '=', order_detail.get('id_customer')), ('prestashop_customer', '=', True)], limit=1)
-            if not id_customer:
-                try:
-                    cust_data = prestashop.get('customers', order_detail.get('id_customer'))
-                    id_customer = self.create_customer(cust_data.get('customer'), prestashop)
-                except Exception as e:
-                    id_customer = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Customer',
-                                                                        {'name': 'Removed Customer'})
-            id_address_delivery = res_partner_obj.search(
-                [('presta_id', '=', order_detail.get('id_address_delivery')), ('prestashop_address', '=', True)],
-                limit=1)
-            if not id_address_delivery:
-                try:
-                    address_data = prestashop.get('addresses', order_detail.get('id_address_delivery'))
-                    id_address_delivery = self.create_address(address_data.get('address'), prestashop)
-                except Exception as e:
-                    id_address_delivery = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
-                                                                                {'name': 'Removed Addresss'})
-            id_address_invoice = res_partner_obj.search(
-                [('presta_id', '=', order_detail.get('id_address_invoice')), ('prestashop_address', '=', True)],
-                limit=1)
-            if not id_address_invoice:
-                try:
-                    address_inv_data = prestashop.get('addresses', order_detail.get('id_address_invoice'))
-                    id_address_invoice = self.create_address(address_inv_data.get('address'), prestashop)
-                except Exception as e:
-                    id_address_invoice = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
-                                                                               {'name': 'Removed Addresss'})
-            order_vals.update({'partner_id': id_customer.id, 'partner_shipping_id': id_address_delivery.id,
-                               'partner_invoice_id': id_address_invoice.id})
-            state_id = status_obj.search([('presta_id', '=', self.get_value_data(order_detail.get('current_state')))],
-                                         limit=1)
-            if not state_id:
-                try:
-                    orders_status_lst = prestashop.get('order_states',
-                                                       self.get_value_data(order_detail.get('current_state')))
-                    state_id = status_obj.create({'name': self.get_value_data(
-                        self.get_value(orders_status_lst.get('order_state').get('name').get('language'))),
-                        'presta_id': self.get_value_data(
-                            order_detail.get('current_state')), })
-                except Exception as e:
-                    state_id = self.remove_record_prestashop_checked(status_obj, 'Removed Status',
-                                                                     {'name': 'Removed Status'})
+        # try:
+        id_customer = res_partner_obj.search(
+            [('presta_id', '=', order_detail.get('id_customer')), ('prestashop_customer', '=', True)], limit=1)
+        if not id_customer:
+            try:
+                cust_data = prestashop.get('customers', order_detail.get('id_customer'))
+                id_customer = self.create_customer(cust_data.get('customer'), prestashop)
+            except Exception as e:
+                id_customer = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Customer',
+                                                                    {'name': 'Removed Customer'})
+        id_address_delivery = res_partner_obj.search(
+            [('presta_id', '=', order_detail.get('id_address_delivery')), ('prestashop_address', '=', True)],
+            limit=1)
+        if not id_address_delivery:
+            try:
+                address_data = prestashop.get('addresses', order_detail.get('id_address_delivery'))
+                id_address_delivery = self.create_address(address_data.get('address'), prestashop)
+            except Exception as e:
+                id_address_delivery = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
+                                                                            {'name': 'Removed Addresss'})
+        id_address_invoice = res_partner_obj.search(
+            [('presta_id', '=', order_detail.get('id_address_invoice')), ('prestashop_address', '=', True)],
+            limit=1)
+        if not id_address_invoice:
+            try:
+                address_inv_data = prestashop.get('addresses', order_detail.get('id_address_invoice'))
+                id_address_invoice = self.create_address(address_inv_data.get('address'), prestashop)
+            except Exception as e:
+                id_address_invoice = self.remove_record_prestashop_checked(res_partner_obj, 'Removed Addresss',
+                                                                           {'name': 'Removed Addresss'})
+        order_vals.update({'partner_id': id_customer.id, 'partner_shipping_id': id_address_delivery.id,
+                           'partner_invoice_id': id_address_invoice.id})
+        state_id = status_obj.search([('presta_id', '=', self.get_value_data(order_detail.get('current_state')))],
+                                     limit=1)
+        if not state_id:
+            try:
+                orders_status_lst = prestashop.get('order_states',
+                                                   self.get_value_data(order_detail.get('current_state')))
+                state_id = status_obj.create({'name': self.get_value_data(
+                    self.get_value(orders_status_lst.get('order_state').get('name').get('language'))),
+                    'presta_id': self.get_value_data(
+                        order_detail.get('current_state')), })
+            except Exception as e:
+                state_id = self.remove_record_prestashop_checked(status_obj, 'Removed Status',
+                                                                 {'name': 'Removed Status'})
 
-            a = self.get_value_data(order_detail.get('payment'))
-            p_mode = False
-            if a[0] == 'Cash on delivery  COD':
-                p_mode = 'cod'
-            elif a[0] == 'Bank wire':
-                p_mode = 'bankwire'
-            elif a[0] == 'Payments by check':
-                p_mode = 'cheque'
-            elif a[0] == 'Bank transfer':
-                p_mode = 'banktran'
-            order_vals.update({
-                'reference': self.get_value_data(order_detail.get('reference')),
-                'presta_id': order_detail.get('id'),
-                'warehouse_id': self.warehouse_id.id,
-                'presta_order_ref': self.get_value_data(order_detail.get('reference')),
-                'pretsa_payment_mode': p_mode,
-                'pricelist_id': self.pricelist_id.id,
-                'workflow_order_id': self.workflow_id.id,
-                # 'name':  self.get_value_data(order_detail.get('id')),
-                'order_status': state_id.id,
-                'shop_id': self.id,
-                'prestashop_order': True,
-                'presta_order_date': self.get_value_data(order_detail.get('date_add')),
-            })
-            if self.workflow_id.picking_policy:
-                order_vals.update({'picking_policy': self.workflow_id.picking_policy})
-            carr_id = False
-            if int(self.get_value_data(order_detail.get('id_carrier'))) > 0:
-                carr_obj_id = carrier_obj.search(
-                    [('presta_id', '=', order_detail.get('id_carrier')), ('is_presta', '=', True)], limit=1)
-                if carr_obj_id:
-                    carr_id = carr_obj_id.id
-                if not carr_obj_id:
-                    try:
-                        carrier_data = prestashop.get('carriers', self.get_value_data(order_detail.get('id_carrier')))
-                        carr_id = self.create_carrier(self.get_value_data(carrier_data.get('carrier')))
-                    except Exception as e:
-                        product_id = self.remove_record_prestashop_checked(product_obj, 'Removed Carrier',
-                                                                           {'name': 'Removed Carrier'})
-                        carr_id = self.remove_record_prestashop_checked(carrier_obj, 'Removed Carrier',
-                                                                        {'name': 'Removed Carrier',
-                                                                         'product_id': product_id.id,
-                                                                         'is_presta': True}).id
+        a = self.get_value_data(order_detail.get('payment'))
+        p_mode = False
+        if a[0] == 'Cash on delivery  COD':
+            p_mode = 'cod'
+        elif a[0] == 'Bank wire':
+            p_mode = 'bankwire'
+        elif a[0] == 'Payments by check':
+            p_mode = 'cheque'
+        elif a[0] == 'Bank transfer':
+            p_mode = 'banktran'
+        order_vals.update({
+            'reference': self.get_value_data(order_detail.get('reference')),
+            'presta_id': order_detail.get('id'),
+            'warehouse_id': self.warehouse_id.id,
+            'presta_order_ref': self.get_value_data(order_detail.get('reference')),
+            'pretsa_payment_mode': p_mode,
+            'pricelist_id': self.pricelist_id.id,
+            'workflow_order_id': self.workflow_id.id,
+            # 'name':  self.get_value_data(order_detail.get('id')),
+            'order_status': state_id.id,
+            'shop_id': self.id,
+            'prestashop_order': True,
+            'presta_order_date': self.get_value_data(order_detail.get('date_add')),
+        })
+        if self.workflow_id.picking_policy:
+            order_vals.update({'picking_policy': self.workflow_id.picking_policy})
+        carr_id = False
+        if int(self.get_value_data(order_detail.get('id_carrier'))) > 0:
+            carr_obj_id = carrier_obj.search(
+                [('presta_id', '=', order_detail.get('id_carrier')), ('is_presta', '=', True)], limit=1)
+            if carr_obj_id:
+                carr_id = carr_obj_id.id
+            if not carr_obj_id:
+                try:
+                    carrier_data = prestashop.get('carriers', self.get_value_data(order_detail.get('id_carrier')))
+                    carr_id = self.create_carrier(self.get_value_data(carrier_data.get('carrier')))
+                except Exception as e:
+                    product_id = self.remove_record_prestashop_checked(product_obj, 'Removed Carrier',
+                                                                       {'name': 'Removed Carrier'})
+                    carr_id = self.remove_record_prestashop_checked(carrier_obj, 'Removed Carrier',
+                                                                    {'name': 'Removed Carrier',
+                                                                     'product_id': product_id.id,
+                                                                     'is_presta': True}).id
 
-                order_vals.update({'carrier_prestashop': carr_id})
-            sale_order_id = sale_order_obj.search(
-                [('presta_id', '=', order_detail.get('id')), ('prestashop_order', '=', True)], limit=1)
-            if not sale_order_id:
-                sale_order_id = sale_order_obj.create(order_vals)
-                logger.info('created orders ===> %s', sale_order_id.id)
-            if sale_order_id:
-                self.env.cr.execute(
-                    "select saleorder_id from saleorder_shop_rel where saleorder_id = %s and shop_id = %s" % (
-                        sale_order_id.id, self.id))
-                so_data = self.env.cr.fetchone()
-                if so_data == None:
-                    self.env.cr.execute("insert into saleorder_shop_rel values(%s,%s)" % (sale_order_id.id, self.id))
+            order_vals.update({'carrier_prestashop': carr_id})
+        sale_order_id = sale_order_obj.search(
+            [('presta_id', '=', order_detail.get('id')), ('prestashop_order', '=', True)], limit=1)
+        if not sale_order_id:
+            sale_order_id = sale_order_obj.create(order_vals)
+            logger.info('created orders ===> %s', sale_order_id.id)
+        if sale_order_id:
+            self.env.cr.execute(
+                "select saleorder_id from saleorder_shop_rel where saleorder_id = %s and shop_id = %s" % (
+                    sale_order_id.id, self.id))
+            so_data = self.env.cr.fetchone()
+            if so_data == None:
+                self.env.cr.execute("insert into saleorder_shop_rel values(%s,%s)" % (sale_order_id.id, self.id))
 
-            self.manageOrderLines(sale_order_id, order_detail, prestashop)
-            self.manageOrderWorkflow(sale_order_id, order_detail, state_id)
-            self.env.cr.commit()
-            return sale_order_id
-        except Exception as e:
-            if self.env.context.get('log_id'):
-                log_id = self.env.context.get('log_id')
-                self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-            else:
-                log_id_obj = self.env['prestashop.log'].create(
-                    {'all_operations': 'import_orders', 'error_lines': [(0, 0, {'log_description': str(e)})]})
-                log_id = log_id_obj.id
-            # self = self.with_context(log_id = log_id.id)
-            new_context = dict(self.env.context)
-            new_context.update({'log_id': log_id})
-            self.env.context = new_context
+        self.manageOrderLines(sale_order_id, order_detail, prestashop)
+        self.manageOrderWorkflow(sale_order_id, order_detail, state_id)
+        self.env.cr.commit()
+        return sale_order_id
+        # except Exception as e:
+        #     if self.env.context.get('log_id'):
+        #         log_id = self.env.context.get('log_id')
+        #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+        #     else:
+        #         log_id_obj = self.env['prestashop.log'].create(
+        #             {'all_operations': 'import_orders', 'error_lines': [(0, 0, {'log_description': str(e)})]})
+        #         log_id = log_id_obj.id
+        #     # self = self.with_context(log_id = log_id.id)
+        #     new_context = dict(self.env.context)
+        #     new_context.update({'log_id': log_id})
+        #     self.env.context = new_context
         return True
 
     # @api.multi
     def import_orders(self):
-        try:
-            for shop in self:
-                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                      shop.prestashop_instance_id.webservice_key or None)
-                filters = {'display': 'full', 'filter[id]': '>[%s]' % shop.last_order_id_id_import,
-                           'filter[id_shop]': '%s' % self.presta_id, 'limit': 1}
-                prestashop_order_data = prestashop.get('orders', options=filters)
-                if prestashop_order_data.get('orders') and prestashop_order_data.get('orders').get('order'):
-                    orders = prestashop_order_data.get('orders').get('order')
-                    if isinstance(orders, list):
-                        orders = orders
-                    else:
-                        orders = [orders]
-                    for order in orders:
-                        shop.create_presta_order(order, prestashop)
-                        shop.write({'last_order_id_id_import': order.get('id')})
-                    self.env.cr.commit()
-        except Exception as e:
-            raise ValidationError(_(str(e)))
+        # try:
+        for shop in self:
+            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
+                                                  shop.prestashop_instance_id.webservice_key or None)
+            filters = {'display': 'full', 'filter[id]': '>[%s]' % shop.last_order_id_id_import,
+                       'filter[id_shop]': '%s' % self.presta_id, 'limit': 10}
+            prestashop_order_data = prestashop.get('orders', options=filters)
+            if prestashop_order_data.get('orders') and prestashop_order_data.get('orders').get('order'):
+                orders = prestashop_order_data.get('orders').get('order')
+                if isinstance(orders, list):
+                    orders = orders
+                else:
+                    orders = [orders]
+                for order in orders:
+                    shop.create_presta_order(order, prestashop)
+                    shop.write({'last_order_id_id_import': order.get('id')})
+                self.env.cr.commit()
+        # except Exception as e:
+        #     raise ValidationError(_(str(e)))
         return True
 
     def create_presta_message_threads(self, thread, prestashop):
@@ -2154,31 +2171,31 @@ class SaleShop(models.Model):
             prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
                                                   shop.prestashop_instance_id.webservice_key or None)
             # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location,shop.prestashop_instance_id.webservice_key or None)
-            # try:
-            categ_ids = categ_obj.search([('to_be_exported', '=', True), ('shop_ids', '=', shop.id)])
-            for each in categ_ids:
-                cat = prestashop.get('categories', each.presta_id)
-                cat.get('category').update({
-                    'id': each.presta_id,
-                    'name': {'language': {'attrs': {'id': '1'}, 'value': str(each.name)}},
-                    'active': 1,
-                    'id_parent': each.parent_id and str(each.parent_id.presta_id) or 0,
-                })
+            try:
+                categ_ids = categ_obj.search([('to_be_exported', '=', True), ('shop_ids', '=', shop.id)])
+                for each in categ_ids:
+                    cat = prestashop.get('categories', each.presta_id)
+                    cat.get('category').update({
+                        'id': each.presta_id,
+                        'name': {'language': {'attrs': {'id': '1'}, 'value': str(each.name)}},
+                        'active': 1,
+                        'id_parent': each.parent_id and str(each.parent_id.presta_id) or 0,
+                    })
 
-                cat.get('category').pop('level_depth')
-                cat.get('category').pop('nb_products_recursive')
-                result = prestashop.edit('categories', cat)
-            # except Exception as e:
-            #     if self.env.context.get('log_id'):
-            #         log_id = self.env.context.get('log_id')
-            #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-            #     else:
-            #         log_id_obj = self.env['prestashop.log'].create(
-            #             {'all_operations': 'update_categories', 'error_lines': [(0, 0, {'log_description': str(e), })]})
-            #         log_id = log_id_obj.id
-            #     new_context = dict(self.env.context)
-            #     new_context.update({'log_id': log_id})
-            #     self.env.context = new_context
+                    cat.get('category').pop('level_depth')
+                    cat.get('category').pop('nb_products_recursive')
+                    result = prestashop.edit('categories', cat)
+            except Exception as e:
+                if self.env.context.get('log_id'):
+                    log_id = self.env.context.get('log_id')
+                    self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+                else:
+                    log_id_obj = self.env['prestashop.log'].create(
+                        {'all_operations': 'update_categories', 'error_lines': [(0, 0, {'log_description': str(e), })]})
+                    log_id = log_id_obj.id
+                new_context = dict(self.env.context)
+                new_context.update({'log_id': log_id})
+                self.env.context = new_context
             shop.write({'prestashop_last_update_category_date': datetime.now()})
         return True
 
@@ -2290,6 +2307,7 @@ class SaleShop(models.Model):
         # update product details,image and variants
         prod_templ_obj = self.env['product.template']
         prdct_obj = self.env['product.product']
+        category_obj = self.env['product.category']
         for shop in self:
             print('shop+++++++++++++++++++', shop.id)
             try:
@@ -2307,13 +2325,14 @@ class SaleShop(models.Model):
                         product_data_ids = prod_templ_obj.search(
                             [('write_date', '>=', shop.prestashop_last_update_product_data_date),
                              ])
-                             # ('id', 'in', fetch_products)])
+                        # ('id', 'in', fetch_products)])
                     else:
                         product_data_ids = prod_templ_obj.search([('id', 'in', fetch_products)])
 
                     print('\nproduct_data_ids++++++++++++', product_data_ids)
 
                     for each in product_data_ids:
+                        print('\neach+++++++++++++++++++', each.name, each.categ_id, each.categ_id.presta_id)
                         product = prestashop.get('products', each.presta_id)
                         print('\nproduct++++++++++++++++++++', product)
                         categ = [{'id': each.categ_id.presta_id and str(each.categ_id.presta_id)}]
@@ -2347,7 +2366,7 @@ class SaleShop(models.Model):
                             # 'on_sale': each.product_onsale and str(int(each.product_onsale)),
                             'id': each.presta_id and str(each.presta_id),
                             'id_category_default': each.categ_id and str(each.categ_id.presta_id),
-                            'position_in_category': each.categ_id and str(each.categ_id.presta_id),
+                            'position_in_category': '1',
                             # 'description': {'language': {'attrs': {'id': '1'}, 'value': each.product_description}}
                             # 'name': {'language': {'attrs': {'id': '1'}, 'value': each.prd_label}},
                             # 'product_img_ids':product.get('associations').get('images').get('image') or False,
@@ -2381,7 +2400,6 @@ class SaleShop(models.Model):
 
                             product.get('product').get('associations').get('product_features').update(
                                 {'product_feature': feature_values})
-
 
                         product.get('product').pop('quantity')
                         combination_list = []
@@ -2615,24 +2633,56 @@ class SaleShop(models.Model):
             option.update({'filter[id_product_attribute]': attribute_id})
         # try:
         stock_search = prestashop.get('stock_availables', options=option)
+        print('\nstock_search+++++++++++++++++', stock_search)
         if type(stock_search.get('stock_availables')) == dict:
-            stock_id = stock_search['stock_availables']['stock_available']['attrs']['id']
-            try:
-                stock_data = prestashop.get('stock_availables', stock_id)
-            except Exception as e:
-                return [0, ' Error in Updating Quantity,can`t get stock_available data.']
-            if type(quantity) == str:
-                quantity = quantity.split('.')[0]
-            if type(quantity) == float:
-                quantity = int(quantity)
-            stock_data['stock_available']['quantity'] = int(quantity)
-            stock_data.get('stock_available').update({'quantity': str(quantity), })
-            try:
-                prestashop.edit('stock_availables', stock_data)
-            except Exception as e:
-                pass
+            prestashop_qty_pack_list = stock_search['stock_availables']['stock_available']
+            prestashop_qty_pack_list = self.action_check_isinstance(prestashop_qty_pack_list)
+            print('prestashop_qty_pack_list++++++++++', prestashop_qty_pack_list)
+            for stock in prestashop_qty_pack_list:
+                stock_id = stock.get('attrs').get('id')
+                # stock_id = stock_search['stock_availables']['stock_available']['attrs']['id']
+                try:
+                    stock_data = prestashop.get('stock_availables', stock_id)
+                except Exception as e:
+                    return [0, ' Error in Updating Quantity,can`t get stock_available data.']
+                if type(quantity) == str:
+                    quantity = quantity.split('.')[0]
+                if type(quantity) == float:
+                    quantity = int(quantity)
+                stock_data['stock_available']['quantity'] = int(quantity)
+                stock_data.get('stock_available').update({'quantity': str(quantity), })
+                try:
+                    prestashop.edit('stock_availables', stock_data)
+                except Exception as e:
+                    pass
         else:
             pass
+
+    # def update_quantity_prestashop(self, prestashop, pid, quantity, shop_id, attribute_id=None):
+    #     option = {'id_shop': shop_id, 'filter[id_product]': pid}
+    #     if attribute_id is not None:
+    #         option.update({'filter[id_product_attribute]': attribute_id})
+    #     # try:
+    #     stock_search = prestashop.get('stock_availables', options=option)
+    #     if type(stock_search.get('stock_availables')) == dict:
+    #         print('stock_search+++++++++', stock_search['stock_availables']['stock_available'])
+    #         stock_id = stock_search['stock_availables']['stock_available']['attrs']['id']
+    #         try:
+    #             stock_data = prestashop.get('stock_availables', stock_id)
+    #         except Exception as e:
+    #             return [0, ' Error in Updating Quantity,can`t get stock_available data.']
+    #         if type(quantity) == str:
+    #             quantity = quantity.split('.')[0]
+    #         if type(quantity) == float:
+    #             quantity = int(quantity)
+    #         stock_data['stock_available']['quantity'] = int(quantity)
+    #         stock_data.get('stock_available').update({'quantity': str(quantity), })
+    #         try:
+    #             prestashop.edit('stock_availables', stock_data)
+    #         except Exception as e:
+    #             pass
+    #     else:
+    #         pass
 
     # except Exception as e:
     # 	pass
@@ -2696,6 +2746,7 @@ class SaleShop(models.Model):
         prestashop = PrestaShopWebServiceDict(self.shop_physical_url,
                                               self.prestashop_instance_id.webservice_key or None)
         sale_order_ids = sale_order.search([('order_status_update', '=', True)])
+        print('\nsale_order_ids+++++++++++++++', sale_order_ids)
         # print("sale_order_id??????????????????", sale_order_ids.presta_id, sale_order_ids.order_status.presta_id)
         try:
             for sale_order_id in sale_order_ids:
@@ -2706,13 +2757,23 @@ class SaleShop(models.Model):
                     'id_order_state': str(sale_order_id.order_status.presta_id)
                 })
                 state_update = prestashop.add('order_histories?sendemail=1', order_his_data)
+                print('\nstate_update+++++++++++++++', state_update)
         # status = 'yes'
         except Exception as e:
-            log_id_obj = self.env['prestashop.log'].create(
-                {'all_operations': 'Update Prestashop order Status',
-                 'error_lines': [(0, 0, {'log_description': 'str(e)', })]})
-            log_id = log_id_obj.id
+            print('\neeeeeeeeeeee++++++++++++++++++++', e)
+            # log_id_obj = self.env['prestashop.log'].create(
+            #     {'all_operations': 'Update Prestashop order Status',
+            #      'error_lines': [(0, 0, {'log_description': 'str(e)', })]})
+            # log_id = log_id_obj.id
         # text = 'Status Not Updated For Order Id '+ str(id_order) + ' And Error is ' + str(e)
+
+    def create_images(self, prestashop, image_data, resource_id, image_name=None, resource='images/products'):
+        if image_name == None:
+            image_name = 'op' + str(resource_id) + '.png'
+        # try:
+        # print(",.,.,.,.,.,..,,..,.,ALLLLLLLLLLLLLLLL..........................", str(resource) + '/' + str(resource_id), image_data, image_name)
+        returnid = prestashop.add(str(resource) + '/' + str(resource_id), image_data, image_name)
+        return returnid
 
     # @api.multi
     def export_presta_products(self):
@@ -2733,11 +2794,10 @@ class SaleShop(models.Model):
                 else:
                     product_ids = prod_templ_obj.search([('product_to_be_exported', '=', True)])
                 print('\nproduct_ids++++++++++++++', product_ids)
+
                 for product in product_ids:
                     product_schema = prestashop.get('products', options={'schema': 'blank'})
-                    print('\nproduct_schema+++++++++++', product_schema)
                     categ = [{'id': product.categ_id.presta_id}]
-                    print('\ncateg++++++++++++++', categ)
                     position_categ = categ
                     parent_id = product.categ_id.parent_id
                     print('\nparent_id++++++++++++', parent_id)
@@ -2745,7 +2805,6 @@ class SaleShop(models.Model):
                         while parent_id:
                             categ.append({'id': parent_id.presta_id and str(parent_id.presta_id)})
                             parent_id = parent_id.parent_id
-                        print('\ncateg++++++++++++', categ)
                         product_schema.get('product').get('associations').update({
                             'categories': {'attrs': {'node_type': 'category'}, 'category': categ},
                         })
@@ -2758,18 +2817,12 @@ class SaleShop(models.Model):
                                 'id_feature_value': str(feature_id.feature_value.presta_id)
                             }
                             feature_values.append(vals)
-                        print('\nfeature_values+++++++++++', feature_values)
 
                         product_schema.get('product').get('associations').get('product_features').update(
                             {'product_feature': feature_values})
 
                     product_schema.get('product').get('associations').get('stock_availables').update(
                         {'stock_available': {'id': '0', 'id_product_attribute': '0'}})
-
-                    print('self', self.id)
-                    print('shop', shop.id)
-                    print('product', product.product_instock)
-                    print('qty', product.qty_available)
 
                     product_vals = {
                         'name': {'language': {'attrs': {'id': '1'}, 'value': product.name}},
@@ -2791,7 +2844,7 @@ class SaleShop(models.Model):
                         'available_now': ({'language': {'attrs': {'id': '1'}, 'value': product.product_instock and str(
                             int(product.product_instock))}}),
 
-                        # 'quantity': {'attrs': {'notFilterable': 'true'}, 'value': '1'},
+                        # 'quantity': {'attrs': {'notFilterable': 'true'}, 'value': '2'},
                         # 'minimal_quantity': '1',
                         # 'additional_shipping_cost': 20,
                         'position_in_category': {'attrs': {'notFilterable': 'true'}, 'value': '1'},
@@ -2799,8 +2852,6 @@ class SaleShop(models.Model):
                         'visibility': 'both',
                         'available_for_order': '1',
                     }
-
-
 
                     if product.manufacturer_id.presta_id:
                         product_vals.update({
@@ -2814,18 +2865,19 @@ class SaleShop(models.Model):
                     print('\nproduct_vals++++++++++++', product_vals)
                     product_schema.get('product').update(product_vals)
 
-                    print('\nproduct_schema+++++++++++', product_schema)
+                    print('\nproduct_schema+++++++++++++', product_schema)
+
                     presta_res = prestashop.add('products', product_schema)
-                    print('\npresta_res+++++++++++++', presta_res)
+                    print('\npresta_response+++++++++++++', presta_res)
 
                     p_ids = prdct_obj.search([('product_tmpl_id', '=', product[0].id)])
                     product_var_ids = prdct_obj.search([('product_tmpl_id', '=', product.id)])
-                    print('\nproduct_var_ids+++++++++++', product_var_ids)
 
                     presta_id = self.get_value_data(presta_res.get('prestashop').get('product').get('id'))
                     product.write({'presta_id': presta_id})
-                    # if product.image_1920:
-                    #     get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
+                    if product.image_1920:
+                        get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
+
                     # if product.product_template_image_ids:
                     #     for images in product.product_template_image_ids:
                     #         get = self.create_images(prestashop, images.image_1920, presta_id, 'tushar.png')
@@ -2839,12 +2891,13 @@ class SaleShop(models.Model):
                         option_values = []
                         print('\nproduct_template_attribute_value_ids', prod_var.product_template_attribute_value_ids)
                         if prod_var.product_template_attribute_value_ids:
-                            for op in prod_var.product_template_attribute_value_ids:
-                                option_values.append({'id': op.presta_id})
-                            print('\noption_values++++++++++++', option_values)
-                            product_comb_schema.get('combination').get('associations').get('product_option_values').update({
-                                'product_option_value': option_values
-                            })
+                            # for op in prod_var.product_template_attribute_value_ids:
+                            #     print('op++++++++++++++++++', op, op.name)
+                            #     option_values.append({'id': op.presta_id})
+                            # print('\noption_values++++++++++++', option_values)
+                            # product_comb_schema.get('combination').get('associations').get('product_option_values').update({
+                            #     'product_option_value': option_values
+                            # })
                             product_comb_schema.get('combination').update({
                                 'id_product': presta_id,
                                 'price': prod_var.combination_price and str(prod_var.combination_price) or '0.00',
@@ -2852,7 +2905,9 @@ class SaleShop(models.Model):
                                 'quantity': str(int(prod_var.qty_available)),
                                 'minimal_quantity': '1',
                             })
+                            print('\nproduct_comb_schema++++++++++++++', product_comb_schema)
                             combination_resp = prestashop.add('combinations', product_comb_schema)
+                            print('\ncombination_resp++++++++++++++', combination_resp)
                             c_presta_id = self.get_value_data(
                                 combination_resp.get('prestashop').get('combination').get('id'))
                             prod_var.write({
@@ -2860,9 +2915,43 @@ class SaleShop(models.Model):
                             })
                         else:
                             pass
+                    # self.export_presta_product_inventory()
+
+                    # if not product.attribute_line_ids:
+                    #     stock_quant_obj = self.env['stock.quant']
+                    #     product_product_id = prdct_obj.search([('product_tmpl_id', '=', product.id)], limit=1)
+                    #     stock_quant_ids = stock_quant_obj.search(
+                    #         [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
+                    #          ('product_id', '=', product_product_id.id)])
+                    #     quantity = sum(
+                    #         stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
+                    #     quantity_avilable = quantity
+                    #     print('\nquantity_avilable+++++++++++++', quantity_avilable)
+                    #     shop.update_quantity_prestashop(prestashop, product.presta_id,
+                    #                                     quantity_avilable, shop.presta_id)
+                    # else:
+                    #     stock_quant_obj = self.env['stock.quant']
+                    #     product_product_ids = prdct_obj.search([('product_tmpl_id', '=', product.id)])
+                    #     print('\nproduct_product_ids++++++++++', product_product_ids)
+                    #     total = 0
+                    #     for product_product_id in product_product_ids:
+                    #         stock_quant_ids = stock_quant_obj.search(
+                    #             [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
+                    #              ('product_id', '=', product_product_id.id)])
+                    #         quantity = sum(
+                    #             stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
+                    #         total = total + quantity
+                    #         print('\ntotal+++++++++++++', total)
+                    #         quantity_avilable = quantity
+                    #         shop.update_quantity_prestashop(prestashop, product.presta_id,
+                    #                                         quantity_avilable, shop.presta_id)
+
+                    # shop.update_quantity_prestashop(prestashop, product.presta_id,
+                    #                                 total, shop.presta_id)
                     product.write({
                         'product_to_be_exported': False,
                     })
+                shop.env.cr.commit()
             except Exception as e:
                 if self.env.context.get('log_id'):
                     log_id = self.env.context.get('log_id')
@@ -2931,53 +3020,53 @@ class SaleShop(models.Model):
         prodct_templ_obj = self.env['product.template']
         prodct_obj = self.env['product.product']
         stock_quant_obj = self.env['stock.quant']
-        try:
-            for shop in self:
-                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                      shop.prestashop_instance_id.webservice_key or None)
-                self.env.cr.execute("update product_template set prestashop_update_stock= False;")
-                product_tmpl_ids = prodct_templ_obj.search([('prestashop_update_stock', '=', False)])
-                if product_tmpl_ids:
-                    for product_tmpl_id in product_tmpl_ids:
+        # try:
+        for shop in self:
+            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
+                                                  shop.prestashop_instance_id.webservice_key or None)
+            self.env.cr.execute("update product_template set prestashop_update_stock= False;")
+            product_tmpl_ids = prodct_templ_obj.search([('prestashop_update_stock', '=', False)])
+            if product_tmpl_ids:
+                for product_tmpl_id in product_tmpl_ids:
+                    if product_tmpl_id.presta_id:
+                        product_product_ids = prodct_obj.search([('product_tmpl_id', '=', product_tmpl_id.id)])
                         if product_tmpl_id.presta_id:
-                            product_product_ids = prodct_obj.search([('product_tmpl_id', '=', product_tmpl_id.id)])
-                            if product_tmpl_id.presta_id:
-                                if len(product_product_ids) == 1:
-                                    stock_quant_ids = stock_quant_obj.search(
-                                        [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
-                                         ('product_id', '=', product_product_ids.id)])
-                                    quantity = sum(stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
-                                    reserved_quantity = sum(
-                                        stock_quant_id.reserved_quantity for stock_quant_id in stock_quant_ids)
-                                    quantity_avilable = quantity - reserved_quantity
-                                    shop.update_quantity_prestashop(prestashop, product_tmpl_id.presta_id,
-                                                                    quantity_avilable, shop.presta_id)
+                            if len(product_product_ids) == 1:
+                                stock_quant_ids = stock_quant_obj.search(
+                                    [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
+                                     ('product_id', '=', product_product_ids.id)])
+                                quantity = sum(stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
+                                reserved_quantity = sum(
+                                    stock_quant_id.reserved_quantity for stock_quant_id in stock_quant_ids)
+                                quantity_avilable = quantity - reserved_quantity
+                                shop.update_quantity_prestashop(prestashop, product_tmpl_id.presta_id,
+                                                                quantity_avilable, shop.presta_id)
 
-                                else:
-                                    for product_product_id in product_product_ids:
-                                        if product_product_id.combination_id:
-                                            stock_quant_ids = stock_quant_obj.search(
-                                                [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
-                                                 ('product_id', '=', product_product_id.id)])
-                                            quantity_avilable = sum(
-                                                stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
-                                            combination_id = product_product_id.combination_id
-                                            shop.update_quantity_prestashop(prestashop, product_tmpl_id.presta_id,
-                                                                            quantity_avilable, shop.presta_id,
-                                                                            combination_id)
-                            product_tmpl_id.write({'prestashop_update_stock': True})
+                            else:
+                                for product_product_id in product_product_ids:
+                                    if product_product_id.combination_id:
+                                        stock_quant_ids = stock_quant_obj.search(
+                                            [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
+                                             ('product_id', '=', product_product_id.id)])
+                                        quantity_avilable = sum(
+                                            stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
+                                        combination_id = product_product_id.combination_id
+                                        shop.update_quantity_prestashop(prestashop, product_tmpl_id.presta_id,
+                                                                        quantity_avilable, shop.presta_id,
+                                                                        combination_id)
+                        product_tmpl_id.write({'prestashop_update_stock': True})
 
-        except Exception as e:
-            if self.env.context.get('log_id'):
-                log_id = self.env.context.get('log_id')
-                self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-            else:
-                log_id_obj = self.env['prestashop.log'].create(
-                    {'all_operations': 'update_inventory', 'error_lines': [(0, 0, {'log_description': str(e), })]})
-                log_id = log_id_obj.id
-            new_context = dict(self.env.context)
-            new_context.update({'log_id': log_id})
-            self.env.context = new_context
+        # except Exception as e:
+        #     if self.env.context.get('log_id'):
+        #         log_id = self.env.context.get('log_id')
+        #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+        #     else:
+        #         log_id_obj = self.env['prestashop.log'].create(
+        #             {'all_operations': 'update_inventory', 'error_lines': [(0, 0, {'log_description': str(e), })]})
+        #         log_id = log_id_obj.id
+        #     new_context = dict(self.env.context)
+        #     new_context.update({'log_id': log_id})
+        #     self.env.context = new_context
 
     def export_presta_products_variants(self):
         # exports product details,image and variants
@@ -3059,11 +3148,10 @@ class SaleShop(models.Model):
                 product_var_ids = prdct_obj.search([('product_tmpl_id', '=', product.id)])
                 print('\nproduct_var_ids++++++++++++++', product_var_ids)
 
-
                 presta_id = self.get_value_data(presta_res.get('prestashop').get('product').get('id'))
                 product.write({'presta_id': presta_id})
-                # if product.image_1920:
-                #     get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
+                if product.image_1920:
+                    get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
                 # if product.product_template_image_ids:
                 #     for images in product.product_template_image_ids:
                 #         get = self.create_images(prestashop, images.image_1920, presta_id, 'tushar.png')
@@ -3550,7 +3638,7 @@ class SaleShop(models.Model):
                     'order_row': lines,
                 })
                 print('cariier', order.carrier_prestashop and order.carrier_prestashop.presta_id and str(
-                        order.carrier_prestashop.presta_id))
+                    order.carrier_prestashop.presta_id))
                 print('delivery', order.partner_id.address_id and str(order.partner_id.address_id))
                 carts_schema.get('cart').update({
                     'id_carrier': order.carrier_prestashop and order.carrier_prestashop.presta_id and str(
