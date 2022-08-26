@@ -2782,190 +2782,157 @@ class SaleShop(models.Model):
         prdct_obj = self.env['product.product']
         stock_quanty = self.env['stock.quant']
         for shop in self:
-            # try:
-            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                  shop.prestashop_instance_id.webservice_key or None)
-            # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location,shop.prestashop_instance_id.webservice_key or None)
-            query = "select product_id from product_templ_shop_rel where shop_id = %s" % shop.id
-            self.env.cr.execute(query)
-            fetch_shop_products = self.env.cr.fetchall()
-            if self.env.context.get('product_ids'):
-                product_ids = prod_templ_obj.browse(self.env.context.get('product_ids'))
-            else:
-                product_ids = prod_templ_obj.search([('product_to_be_exported', '=', True), ('presta_id', '=', None)])
-            print('\nproduct_ids++++++++++++++', product_ids)
+            try:
+                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
+                                                      shop.prestashop_instance_id.webservice_key or None)
+                # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location,shop.prestashop_instance_id.webservice_key or None)
+                query = "select product_id from product_templ_shop_rel where shop_id = %s" % shop.id
+                self.env.cr.execute(query)
+                fetch_shop_products = self.env.cr.fetchall()
+                if self.env.context.get('product_ids'):
+                    product_ids = prod_templ_obj.browse(self.env.context.get('product_ids'))
+                else:
+                    product_ids = prod_templ_obj.search([('product_to_be_exported', '=', True), ('presta_id', '=', None)])
+                print('\nproduct_ids++++++++++++++', product_ids)
 
-            dwdwd
-
-            for product in product_ids:
-                product_schema = prestashop.get('products', options={'schema': 'blank'})
-                categ = [{'id': product.categ_id.presta_id}]
-                position_categ = categ
-                parent_id = product.categ_id.parent_id
-                print('\nparent_id++++++++++++', parent_id)
-                if categ:
-                    while parent_id:
-                        categ.append({'id': parent_id.presta_id and str(parent_id.presta_id)})
-                        parent_id = parent_id.parent_id
-                    product_schema.get('product').get('associations').update({
-                        'categories': {'attrs': {'node_type': 'category'}, 'category': categ},
-                    })
-
-                if product.product_spec_ids:
-                    feature_values = []
-                    for feature_id in product.product_spec_ids:
-                        vals = {
-                            'id': str(feature_id.feature.presta_id),
-                            'id_feature_value': str(feature_id.feature_value.presta_id)
-                        }
-                        feature_values.append(vals)
-
-                    product_schema.get('product').get('associations').get('product_features').update(
-                        {'product_feature': feature_values})
-
-                product_schema.get('product').get('associations').get('stock_availables').update(
-                    {'stock_available': {'id': '0', 'id_product_attribute': '0'}})
-
-                product_vals = {
-                    'name': {'language': {'attrs': {'id': '1'}, 'value': product.name}},
-                    'link_rewrite': {'language': {'attrs': {'id': '1'}, 'value': product.name.replace(' ', '-')}},
-                    'reference': product.default_code,
-                    'price': product.list_price and str(product.list_price) or '0.00',
-                    'wholesale_price': str(product.wholesale_price),
-                    'depth': str(product.product_lngth),
-                    'width': str(product.product_width),
-                    'weight': str(product.product_wght),
-                    'height': str(product.product_hght),
-                    'date_upd': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    'date_add': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                    'active': 1,
-                    'state': '1',
-                    'type': {'attrs': {'notFilterable': 'true'}, 'value': 'simple'},
-                    'id_shop_default': str(self.id),
-                    'on_sale': '1',
-                    'available_now': ({'language': {'attrs': {'id': '1'}, 'value': product.product_instock and str(
-                        int(product.product_instock))}}),
-
-                    # 'quantity': {'attrs': {'notFilterable': 'true'}, 'value': '2'},
-                    # 'minimal_quantity': '1',
-                    # 'additional_shipping_cost': 20,
-                    'position_in_category': {'attrs': {'notFilterable': 'true'}, 'value': '1'},
-                    'id_category_default': '1',
-                    'visibility': 'both',
-                    'available_for_order': '1',
-                }
-
-                if product.manufacturer_id.presta_id:
-                    product_vals.update({
-                        'id_manufacturer': product.manufacturer_id and product.manufacturer_id.presta_id or '0',
-                    })
-                if product.supplier_id.presta_id:
-                    product_vals.update({
-                        'id_supplier': product.supplier_id and product.supplier_id.presta_id or '0',
-                    })
-
-                print('\nproduct_vals++++++++++++', product_vals)
-                product_schema.get('product').update(product_vals)
-
-                print('\nproduct_schema+++++++++++++', product_schema)
-
-                presta_res = prestashop.add('products', product_schema)
-                print('\npresta_response+++++++++++++', presta_res)
-
-                p_ids = prdct_obj.search([('product_tmpl_id', '=', product[0].id)])
-                product_var_ids = prdct_obj.search([('product_tmpl_id', '=', product.id)])
-
-                presta_id = self.get_value_data(presta_res.get('prestashop').get('product').get('id'))
-                product.write({'presta_id': presta_id})
-                if product.image_1920:
-                    get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
-
-                # if product.product_template_image_ids:
-                #     for images in product.product_template_image_ids:
-                #         get = self.create_images(prestashop, images.image_1920, presta_id, 'tushar.png')
-                for prod_var in product_var_ids:
-                    stck_id = stock_quanty.search(
-                        [('product_id', '=', prod_var.id), ('location_id', '=', shop.warehouse_id.lot_stock_id.id)])
-                    qty = 0
-                    for stck in stck_id:
-                        qty += stck.quantity
-                    product_comb_schema = prestashop.get('combinations', options={'schema': 'blank'})
-                    option_values = []
-                    print('\nproduct_template_attribute_value_ids', prod_var.product_template_attribute_value_ids)
-                    if prod_var.product_template_attribute_value_ids:
-                        # for op in prod_var.product_template_attribute_value_ids:
-                        #     print('op++++++++++++++++++', op, op.name)
-                        #     option_values.append({'id': op.presta_id})
-                        # print('\noption_values++++++++++++', option_values)
-                        # product_comb_schema.get('combination').get('associations').get('product_option_values').update({
-                        #     'product_option_value': option_values
-                        # })
-                        product_comb_schema.get('combination').update({
-                            'id_product': presta_id,
-                            'price': prod_var.combination_price and str(prod_var.combination_price) or '0.00',
-                            'reference': prod_var.default_code,
-                            'quantity': str(int(prod_var.qty_available)),
-                            'minimal_quantity': '1',
+                for product in product_ids:
+                    product_schema = prestashop.get('products', options={'schema': 'blank'})
+                    categ = [{'id': product.categ_id.presta_id}]
+                    position_categ = categ
+                    parent_id = product.categ_id.parent_id
+                    print('\nparent_id++++++++++++', parent_id)
+                    if categ:
+                        while parent_id:
+                            categ.append({'id': parent_id.presta_id and str(parent_id.presta_id)})
+                            parent_id = parent_id.parent_id
+                        product_schema.get('product').get('associations').update({
+                            'categories': {'attrs': {'node_type': 'category'}, 'category': categ},
                         })
-                        print('\nproduct_comb_schema++++++++++++++', product_comb_schema)
-                        combination_resp = prestashop.add('combinations', product_comb_schema)
-                        print('\ncombination_resp++++++++++++++', combination_resp)
-                        c_presta_id = self.get_value_data(
-                            combination_resp.get('prestashop').get('combination').get('id'))
-                        prod_var.write({
-                            'combination_id': c_presta_id,
+
+                    if product.product_spec_ids:
+                        feature_values = []
+                        for feature_id in product.product_spec_ids:
+                            vals = {
+                                'id': str(feature_id.feature.presta_id),
+                                'id_feature_value': str(feature_id.feature_value.presta_id)
+                            }
+                            feature_values.append(vals)
+
+                        product_schema.get('product').get('associations').get('product_features').update(
+                            {'product_feature': feature_values})
+
+                    product_schema.get('product').get('associations').get('stock_availables').update(
+                        {'stock_available': {'id': '0', 'id_product_attribute': '0'}})
+
+                    product_vals = {
+                        'name': {'language': {'attrs': {'id': '1'}, 'value': product.name}},
+                        'link_rewrite': {'language': {'attrs': {'id': '1'}, 'value': product.name.replace(' ', '-')}},
+                        'reference': product.default_code,
+                        'price': product.list_price and str(product.list_price) or '0.00',
+                        'wholesale_price': str(product.wholesale_price),
+                        'depth': str(product.product_lngth),
+                        'width': str(product.product_width),
+                        'weight': str(product.product_wght),
+                        'height': str(product.product_hght),
+                        'date_upd': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'date_add': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                        'active': 1,
+                        'state': '1',
+                        'type': {'attrs': {'notFilterable': 'true'}, 'value': 'simple'},
+                        'id_shop_default': str(self.id),
+                        'on_sale': '1',
+                        'available_now': ({'language': {'attrs': {'id': '1'}, 'value': product.product_instock and str(
+                            int(product.product_instock))}}),
+
+                        # 'quantity': {'attrs': {'notFilterable': 'true'}, 'value': '2'},
+                        # 'minimal_quantity': '1',
+                        # 'additional_shipping_cost': 20,
+                        'position_in_category': {'attrs': {'notFilterable': 'true'}, 'value': '1'},
+                        'id_category_default': '1',
+                        'visibility': 'both',
+                        'available_for_order': '1',
+                    }
+
+                    if product.manufacturer_id.presta_id:
+                        product_vals.update({
+                            'id_manufacturer': product.manufacturer_id and product.manufacturer_id.presta_id or '0',
                         })
-                    else:
-                        pass
-                # self.export_presta_product_inventory()
+                    if product.supplier_id.presta_id:
+                        product_vals.update({
+                            'id_supplier': product.supplier_id and product.supplier_id.presta_id or '0',
+                        })
 
-                # if not product.attribute_line_ids:
-                #     stock_quant_obj = self.env['stock.quant']
-                #     product_product_id = prdct_obj.search([('product_tmpl_id', '=', product.id)], limit=1)
-                #     stock_quant_ids = stock_quant_obj.search(
-                #         [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
-                #          ('product_id', '=', product_product_id.id)])
-                #     quantity = sum(
-                #         stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
-                #     quantity_avilable = quantity
-                #     print('\nquantity_avilable+++++++++++++', quantity_avilable)
-                #     shop.update_quantity_prestashop(prestashop, product.presta_id,
-                #                                     quantity_avilable, shop.presta_id)
-                # else:
-                #     stock_quant_obj = self.env['stock.quant']
-                #     product_product_ids = prdct_obj.search([('product_tmpl_id', '=', product.id)])
-                #     print('\nproduct_product_ids++++++++++', product_product_ids)
-                #     total = 0
-                #     for product_product_id in product_product_ids:
-                #         stock_quant_ids = stock_quant_obj.search(
-                #             [('location_id', '=', shop.warehouse_id.lot_stock_id.id),
-                #              ('product_id', '=', product_product_id.id)])
-                #         quantity = sum(
-                #             stock_quant_id.quantity for stock_quant_id in stock_quant_ids)
-                #         total = total + quantity
-                #         print('\ntotal+++++++++++++', total)
-                #         quantity_avilable = quantity
-                #         shop.update_quantity_prestashop(prestashop, product.presta_id,
-                #                                         quantity_avilable, shop.presta_id)
+                    print('\nproduct_vals++++++++++++', product_vals)
+                    product_schema.get('product').update(product_vals)
 
-                # shop.update_quantity_prestashop(prestashop, product.presta_id,
-                #                                 total, shop.presta_id)
-                product.write({
-                    'product_to_be_exported': False,
-                })
-            shop.env.cr.commit()
-            # except Exception as e:
-            #     if self.env.context.get('log_id'):
-            #         log_id = self.env.context.get('log_id')
-            #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-            #     else:
-            #         log_id_obj = self.env['prestashop.log'].create(
-            #             {'all_operations': 'export_product_data',
-            #              'error_lines': [(0, 0, {'log_description': str(e), })]})
-            #         log_id = log_id_obj.id
-            #     new_context = dict(self.env.context)
-            #     new_context.update({'log_id': log_id})
-            #     self.env.context = new_context
+                    print('\nproduct_schema+++++++++++++', product_schema)
+
+                    presta_res = prestashop.add('products', product_schema)
+                    print('\npresta_response+++++++++++++', presta_res)
+
+                    p_ids = prdct_obj.search([('product_tmpl_id', '=', product[0].id)])
+                    product_var_ids = prdct_obj.search([('product_tmpl_id', '=', product.id)])
+
+                    presta_id = self.get_value_data(presta_res.get('prestashop').get('product').get('id'))
+                    product.write({'presta_id': presta_id})
+                    if product.image_1920:
+                        get = self.create_images(prestashop, product.image_1920, presta_id, 'tushar.png')
+
+                    # if product.product_template_image_ids:
+                    #     for images in product.product_template_image_ids:
+                    #         get = self.create_images(prestashop, images.image_1920, presta_id, 'tushar.png')
+                    for prod_var in product_var_ids:
+                        stck_id = stock_quanty.search(
+                            [('product_id', '=', prod_var.id), ('location_id', '=', shop.warehouse_id.lot_stock_id.id)])
+                        qty = 0
+                        for stck in stck_id:
+                            qty += stck.quantity
+                        product_comb_schema = prestashop.get('combinations', options={'schema': 'blank'})
+                        option_values = []
+                        print('\nproduct_template_attribute_value_ids', prod_var.product_template_attribute_value_ids)
+                        if prod_var.product_template_attribute_value_ids:
+                            # for op in prod_var.product_template_attribute_value_ids:
+                            #     print('op++++++++++++++++++', op, op.name)
+                            #     option_values.append({'id': op.presta_id})
+                            # print('\noption_values++++++++++++', option_values)
+                            # product_comb_schema.get('combination').get('associations').get('product_option_values').update({
+                            #     'product_option_value': option_values
+                            # })
+                            product_comb_schema.get('combination').update({
+                                'id_product': presta_id,
+                                'price': prod_var.combination_price and str(prod_var.combination_price) or '0.00',
+                                'reference': prod_var.default_code,
+                                'quantity': str(int(prod_var.qty_available)),
+                                'minimal_quantity': '1',
+                            })
+                            print('\nproduct_comb_schema++++++++++++++', product_comb_schema)
+                            combination_resp = prestashop.add('combinations', product_comb_schema)
+                            print('\ncombination_resp++++++++++++++', combination_resp)
+                            c_presta_id = self.get_value_data(
+                                combination_resp.get('prestashop').get('combination').get('id'))
+                            prod_var.write({
+                                'combination_id': c_presta_id,
+                            })
+                        else:
+                            pass
+                    # self.export_presta_product_inventory()
+
+                    product.write({
+                        'product_to_be_exported': False,
+                    })
+                shop.env.cr.commit()
+            except Exception as e:
+                if self.env.context.get('log_id'):
+                    log_id = self.env.context.get('log_id')
+                    self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+                else:
+                    log_id_obj = self.env['prestashop.log'].create(
+                        {'all_operations': 'export_product_data',
+                         'error_lines': [(0, 0, {'log_description': str(e), })]})
+                    log_id = log_id_obj.id
+                new_context = dict(self.env.context)
+                new_context.update({'log_id': log_id})
+                self.env.context = new_context
         return True
 
     # @api.multi
