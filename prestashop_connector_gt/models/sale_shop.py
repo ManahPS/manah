@@ -2794,8 +2794,27 @@ class SaleShop(models.Model):
                 else:
                     product_ids = prod_templ_obj.search([('product_to_be_exported', '=', True), ('presta_id', '=', None)])
                 print('\nproduct_ids++++++++++++++', product_ids)
+                print('\nproduct_ids++++++++++++++', len(product_ids))
 
-                for product in product_ids:
+                check_list = []
+                for temp_data in product_ids:
+                    check_list.append(temp_data.id)
+
+                new_list = []
+                if len(check_list) >= 100:
+                    new_list = check_list[:100]
+                else:
+                    new_list = check_list
+
+                print('new_list++++++++++++++', new_list)
+                print('len+++++++++++', len(new_list))
+
+                # for product in product_ids:
+                for prod_id in new_list:
+
+                    product = prod_templ_obj.search([('id', '=', prod_id)])
+                    print('product+++++++++++++++++', product)
+
                     product_schema = prestashop.get('products', options={'schema': 'blank'})
                     categ = [{'id': product.categ_id.presta_id}]
                     position_categ = categ
