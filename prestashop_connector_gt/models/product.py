@@ -62,6 +62,8 @@ class product_template(models.Model):
     product_to_be_exported = fields.Boolean(string="Product to be exported?")
     sku = fields.Char(string="SKU")
 
+    product_to_be_updated = fields.Boolean('To be Updated')
+
     def write(self, vals):
         print('self+++++++++++++', self)
         print('vals+++++++++++++', vals)

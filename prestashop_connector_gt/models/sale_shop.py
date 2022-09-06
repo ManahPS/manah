@@ -2310,147 +2310,156 @@ class SaleShop(models.Model):
         category_obj = self.env['product.category']
         for shop in self:
             print('shop+++++++++++++++++++', shop.id)
-            try:
-                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                      shop.prestashop_instance_id.webservice_key or None)
-                # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location,shop.prestashop_instance_id.webservice_key or None)
-                query = "select product_id from product_templ_shop_rel where shop_id = %s" % shop.id
-                self.env.cr.execute(query)
-                fetch_products = self.env.cr.fetchall()
-                print('\nfetch_products++++++++++++', fetch_products)
-                if fetch_products is not None:
-                    fetch_products = [i[0] for i in fetch_products]
-                    print('shop+++++++++++++', shop.prestashop_last_update_product_data_date)
-                    if shop.prestashop_last_update_product_data_date:
-                        product_data_ids = prod_templ_obj.search(
-                            [('write_date', '>=', shop.prestashop_last_update_product_data_date),
-                             ])
-                        # ('id', 'in', fetch_products)])
-                    else:
-                        product_data_ids = prod_templ_obj.search([('id', 'in', fetch_products)])
+            # try:
+            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
+                                                  shop.prestashop_instance_id.webservice_key or None)
+            # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location,shop.prestashop_instance_id.webservice_key or None)
+            query = "select product_id from product_templ_shop_rel where shop_id = %s" % shop.id
+            self.env.cr.execute(query)
+            fetch_products = self.env.cr.fetchall()
+            print('\nfetch_products++++++++++++', fetch_products)
+            if fetch_products is not None:
+                fetch_products = [i[0] for i in fetch_products]
+                print('shop+++++++++++++', shop.prestashop_last_update_product_data_date)
+                # if shop.prestashop_last_update_product_data_date:
+                #     print('if+++++++++++++++', shop.prestashop_last_update_product_data_date)
+                #
+                #     product_data_ids = prod_templ_obj.search(
+                #         [('write_date', '>', shop.prestashop_last_update_product_data_date),
+                #          ])
+                #     # ('id', 'in', fetch_products)])
+                # else:
+                #     print('else++++++++++++++++++++++')
+                #     product_data_ids = prod_templ_obj.search([('id', 'in', fetch_products)])
 
-                    print('\nproduct_data_ids++++++++++++', product_data_ids)
+                product_data_ids = prod_templ_obj.search(
+                    [('product_to_be_updated', '=', True)])
 
-                    for each in product_data_ids:
-                        print('\neach+++++++++++++++++++', each.name, each.categ_id, each.categ_id.presta_id)
-                        product = prestashop.get('products', each.presta_id)
-                        print('\nproduct++++++++++++++++++++', product)
-                        categ = [{'id': each.categ_id.presta_id and str(each.categ_id.presta_id)}]
-                        position_categ = each.categ_id.presta_id
-                        if position_categ == False:
-                            position_categ = 1
-                        print('position_categ+++++++++++', position_categ)
-                        parent_id = each.categ_id.parent_id
-                        while parent_id:
-                            categ.append({'id': parent_id.presta_id and str(parent_id.presta_id)})
-                            parent_id = parent_id.parent_id
-                        product.get('product').get('associations').update(
-                            {'categories': {'attrs': {'node_type': 'category'}, 'category': categ}, })
+                print('\nproduct_data_ids++++++++++++', product_data_ids)
 
-                        product_update_vals = {
-                            'name': {'language': {'attrs': {'id': '1'}, 'value': each.name and str(each.name)}},
-                            'active': '1',
-                            'type': 'simple',
-                            'on_sale': '1',
-                            'state': '1',
-                            'online_only': '1',
-                            'reference': each.default_code and str(each.default_code),
-                            'wholesale_price': each.wholesale_price and str(each.wholesale_price),
-                            'price': each.list_price and str(each.list_price),
-                            'depth': each.product_lngth and str(each.product_lngth),
-                            'width': each.product_width and str(each.product_width),
-                            'weight': each.product_wght and str(each.product_wght),
-                            'height': each.product_hght and str(each.product_hght),
-                            'available_now': ({'language': {'attrs': {'id': '1'}, 'value': each.product_instock and str(
-                                int(each.product_instock))}}),
-                            # 'on_sale': each.product_onsale and str(int(each.product_onsale)),
-                            'id': each.presta_id and str(each.presta_id),
-                            'id_category_default': each.categ_id and str(each.categ_id.presta_id),
-                            'position_in_category': '1',
-                            # 'description': {'language': {'attrs': {'id': '1'}, 'value': each.product_description}}
-                            # 'name': {'language': {'attrs': {'id': '1'}, 'value': each.prd_label}},
-                            # 'product_img_ids':product.get('associations').get('images').get('image') or False,
-                        }
+                for each in product_data_ids:
+                    print('\neach+++++++++++++++++++', each.name, each.categ_id, each.categ_id.presta_id)
+                    product = prestashop.get('products', each.presta_id)
+                    print('\nproduct++++++++++++++++++++', product)
+                    categ = [{'id': each.categ_id.presta_id and str(each.categ_id.presta_id)}]
+                    position_categ = each.categ_id.presta_id
+                    if position_categ == False:
+                        position_categ = 1
+                    print('position_categ+++++++++++', position_categ)
+                    parent_id = each.categ_id.parent_id
+                    while parent_id:
+                        categ.append({'id': parent_id.presta_id and str(parent_id.presta_id)})
+                        parent_id = parent_id.parent_id
+                    product.get('product').get('associations').update(
+                        {'categories': {'attrs': {'node_type': 'category'}, 'category': categ}, })
 
-                        if each.supplier_id:
-                            product_update_vals.update({
-                                'id_supplier': each.supplier_id and str(each.supplier_id.presta_id) or '0',
-                            })
+                    product_update_vals = {
+                        'name': {'language': {'attrs': {'id': '1'}, 'value': each.name and str(each.name)}},
+                        'active': '1',
+                        'type': 'simple',
+                        'on_sale': '1',
+                        'state': '1',
+                        'online_only': '1',
+                        'reference': each.default_code and str(each.default_code),
+                        'wholesale_price': each.wholesale_price and str(each.wholesale_price),
+                        'price': each.list_price and str(each.list_price),
+                        'depth': each.product_lngth and str(each.product_lngth),
+                        'width': each.product_width and str(each.product_width),
+                        'weight': each.product_wght and str(each.product_wght),
+                        'height': each.product_hght and str(each.product_hght),
+                        'available_now': ({'language': {'attrs': {'id': '1'}, 'value': each.product_instock and str(
+                            int(each.product_instock))}}),
+                        # 'on_sale': each.product_onsale and str(int(each.product_onsale)),
+                        'id': each.presta_id and str(each.presta_id),
+                        'id_category_default': each.categ_id and str(each.categ_id.presta_id),
+                        'position_in_category': '1',
+                        # 'description': {'language': {'attrs': {'id': '1'}, 'value': each.product_description}}
+                        # 'name': {'language': {'attrs': {'id': '1'}, 'value': each.prd_label}},
+                        # 'product_img_ids':product.get('associations').get('images').get('image') or False,
+                    }
 
-                        if each.manufacturer_id:
-                            product_update_vals.update({
-                                'id_manufacturer': each.manufacturer_id and str(each.manufacturer_id.presta_id) or '0',
-                            })
+                    if each.supplier_id:
+                        product_update_vals.update({
+                            'id_supplier': each.supplier_id and str(each.supplier_id.presta_id) or '0',
+                        })
 
-                        print('\nproduct_update_vals++++++++++', product_update_vals)
+                    if each.manufacturer_id:
+                        product_update_vals.update({
+                            'id_manufacturer': each.manufacturer_id and str(each.manufacturer_id.presta_id) or '0',
+                        })
 
-                        product.get('product').update(product_update_vals)
+                    print('\nproduct_update_vals++++++++++', product_update_vals)
 
-                        if each.product_spec_ids:
-                            features_data = product.get('product').get('associations').get(
-                                'product_features').get('product_feature')
-                            feature_values = []
-                            for feature_id in each.product_spec_ids:
-                                vals = {
-                                    'id': str(feature_id.feature.presta_id),
-                                    'id_feature_value': str(feature_id.feature_value.presta_id)
-                                }
-                                feature_values.append(vals)
-                            print('\nfeature_values+++++++++++', feature_values)
+                    product.get('product').update(product_update_vals)
 
-                            product.get('product').get('associations').get('product_features').update(
-                                {'product_feature': feature_values})
+                    if each.product_spec_ids:
+                        features_data = product.get('product').get('associations').get(
+                            'product_features').get('product_feature')
+                        feature_values = []
+                        for feature_id in each.product_spec_ids:
+                            vals = {
+                                'id': str(feature_id.feature.presta_id),
+                                'id_feature_value': str(feature_id.feature_value.presta_id)
+                            }
+                            feature_values.append(vals)
+                        print('\nfeature_values+++++++++++', feature_values)
 
-                        product.get('product').pop('quantity')
-                        combination_list = []
-                        if each.attribute_line_ids:
-                            prod_variant_ids = prdct_obj.search([('product_tmpl_id', '=', each.id)])
-                            for variant in prod_variant_ids:
-                                if variant.combination_id:
-                                    prod_variants_comb = prestashop.get('combinations', variant.combination_id)
-                                    option_values = []
-                                    for op in variant.product_template_attribute_value_ids:
-                                        option_values.append({'id': op.presta_id and str(op.presta_id)})
-                                    prod_variants_comb.get('combination').get('associations').get(
-                                        'product_option_values').update({
-                                        'product_option_value': option_values[0]
-                                    })
-                                    #
-                                    prod_variants_comb.get('combination').update({
-                                        'is_virtual': '1',
-                                        'id_product': variant.product_tmpl_id and str(
-                                            variant.product_tmpl_id.presta_id),
-                                        'reference': variant.default_code and str(variant.default_code),
-                                        'id': variant.combination_id and str(variant.combination_id),
-                                        'minimal_quantity': '1',
-                                        'price': variant.prdct_unit_price and str(variant.prdct_unit_price),
-                                    })
-                                    response_comb = prestashop.edit('combinations', prod_variants_comb)
-                                    combination_list.append({'id': variant.combination_id})
-                        if combination_list:
-                            product.get('product').get('associations').get('combinations').update({
-                                'combination': combination_list
-                            })
-                        product.get('product').pop('manufacturer_name')
-                        print('before response')
-                        print('\nproduct++++++++++++++++++++', product)
-                        shop.write({'prestashop_last_update_product_data_date': datetime.now()})
-                        response = prestashop.edit('products', product)
+                        product.get('product').get('associations').get('product_features').update(
+                            {'product_feature': feature_values})
+
+                    product.get('product').pop('quantity')
+                    combination_list = []
+                    if each.attribute_line_ids:
+                        prod_variant_ids = prdct_obj.search([('product_tmpl_id', '=', each.id)])
+                        for variant in prod_variant_ids:
+                            if variant.combination_id:
+                                prod_variants_comb = prestashop.get('combinations', variant.combination_id)
+                                option_values = []
+                                for op in variant.product_template_attribute_value_ids:
+                                    option_values.append({'id': op.presta_id and str(op.presta_id)})
+                                prod_variants_comb.get('combination').get('associations').get(
+                                    'product_option_values').update({
+                                    'product_option_value': option_values[0]
+                                })
+                                #
+                                prod_variants_comb.get('combination').update({
+                                    'is_virtual': '1',
+                                    'id_product': variant.product_tmpl_id and str(
+                                        variant.product_tmpl_id.presta_id),
+                                    'reference': variant.default_code and str(variant.default_code),
+                                    'id': variant.combination_id and str(variant.combination_id),
+                                    'minimal_quantity': '1',
+                                    'price': variant.prdct_unit_price and str(variant.prdct_unit_price),
+                                })
+                                response_comb = prestashop.edit('combinations', prod_variants_comb)
+                                combination_list.append({'id': variant.combination_id})
+                    if combination_list:
+                        product.get('product').get('associations').get('combinations').update({
+                            'combination': combination_list
+                        })
+                    product.get('product').pop('manufacturer_name')
+                    print('\nproduct++++++++++++++++++++', product)
                     shop.write({'prestashop_last_update_product_data_date': datetime.now()})
-            except Exception as e:
+                    response = prestashop.edit('products', product)
+                    each.write({
+                        'product_to_be_updated': False
+                    })
                 shop.write({'prestashop_last_update_product_data_date': datetime.now()})
-                print('Date Updated')
-                if self.env.context.get('log_id'):
-                    log_id = self.env.context.get('log_id')
-                    self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-                else:
-                    log_id_obj = self.env['prestashop.log'].create(
-                        {'all_operations': 'update_product_data',
-                         'error_lines': [(0, 0, {'log_description': str(e), })]})
-                    log_id = log_id_obj.id
-                new_context = dict(self.env.context)
-                new_context.update({'log_id': log_id})
-                self.env.context = new_context
+                shop.env.cr.commit()
+            # except Exception as e:
+            #     shop.write({'prestashop_last_update_product_data_date': datetime.now()})
+            #     print('Date Updated')
+            #     if self.env.context.get('log_id'):
+            #         log_id = self.env.context.get('log_id')
+            #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
+            #     else:
+            #         log_id_obj = self.env['prestashop.log'].create(
+            #             {'all_operations': 'update_product_data',
+            #              'error_lines': [(0, 0, {'log_description': str(e), })]})
+            #         log_id = log_id_obj.id
+            #     new_context = dict(self.env.context)
+            #     new_context.update({'log_id': log_id})
+            #     self.env.context = new_context
 
         return True
 
@@ -2743,29 +2752,21 @@ class SaleShop(models.Model):
     def update_order_status(self):
         sale_order = self.env['sale.order']
         status_obj = self.env['presta.order.status']
-        prestashop = PrestaShopWebServiceDict(self.shop_physical_url,
-                                              self.prestashop_instance_id.webservice_key or None)
-        sale_order_ids = sale_order.search([('order_status_update', '=', True)])
-        print('\nsale_order_ids+++++++++++++++', sale_order_ids)
-        # print("sale_order_id??????????????????", sale_order_ids.presta_id, sale_order_ids.order_status.presta_id)
-        try:
-            for sale_order_id in sale_order_ids:
-                print("sale_order_id??????????????????", sale_order_id.presta_id, sale_order_id.order_status.presta_id)
-                order_his_data = prestashop.get('order_histories', options={'schema': 'blank'})
-                order_his_data['order_history'].update({
-                    'id_order': str(sale_order_id.presta_id),
-                    'id_order_state': str(sale_order_id.order_status.presta_id)
-                })
-                state_update = prestashop.add('order_histories?sendemail=1', order_his_data)
-                print('\nstate_update+++++++++++++++', state_update)
-        # status = 'yes'
-        except Exception as e:
-            print('\neeeeeeeeeeee++++++++++++++++++++', e)
-            # log_id_obj = self.env['prestashop.log'].create(
-            #     {'all_operations': 'Update Prestashop order Status',
-            #      'error_lines': [(0, 0, {'log_description': 'str(e)', })]})
-            # log_id = log_id_obj.id
-        # text = 'Status Not Updated For Order Id '+ str(id_order) + ' And Error is ' + str(e)
+        for shop in self:
+            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
+                                                  shop.prestashop_instance_id.webservice_key or None)
+            sale_order_ids = sale_order.search([('order_status_update', '=', True)])
+            try:
+                for sale_order_id in sale_order_ids:
+                    order_his_data = prestashop.get('order_histories', options={'schema': 'blank'})
+                    order_his_data['order_history'].update({
+                        'id_order': str(sale_order_id.presta_id),
+                        'id_order_state': str(sale_order_id.order_status.presta_id)
+                    })
+                    state_update = prestashop.add('order_histories', order_his_data)
+                    shop.env.cr.commit()
+            except Exception as e:
+                print('Except++++++++++++++++++++', e)
 
     def create_images(self, prestashop, image_data, resource_id, image_name=None, resource='images/products'):
         if image_name == None:

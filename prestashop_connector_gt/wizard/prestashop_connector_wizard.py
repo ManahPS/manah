@@ -170,9 +170,6 @@ class PrestashopConnectorWizard(models.Model):
         if self.update_presta_product_inventory:
             self.shop_ids.update_presta_product_inventory()
 
-        if self.update_order_status:
-            self.shop_ids.update_order_status()
-
         if self.export_presta_customers:
             self.shop_ids.export_presta_customers()
 
