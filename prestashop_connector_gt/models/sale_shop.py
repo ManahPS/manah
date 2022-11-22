@@ -264,8 +264,7 @@ class SaleShop(models.Model):
     def import_product_attributes(self):
         for shop in self:
             try:
-                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                      shop.prestashop_instance_id.webservice_key or None)
+                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,shop.prestashop_instance_id.webservice_key or None)
                 # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location, shop.prestashop_instance_id.webservice_key or None)
                 filters = {'display': 'full', 'filter[id]': '>[%s]' % self.last_product_attrs_id_import, 'limit': 1000}
                 product_options = prestashop.get('product_options', options=filters)
@@ -1892,7 +1891,7 @@ class SaleShop(models.Model):
             [('presta_id', '=', order_detail.get('id')), ('prestashop_order', '=', True)], limit=1)
         if not sale_order_id:
             sale_order_id = sale_order_obj.create(order_vals)
-            logger.info('created orders ===> %s', sale_order_id.id)
+            logger.info(f'created orders ===> {sale_order_id.name} - {sale_order_id.presta_id}', )
         if sale_order_id:
             self.env.cr.execute(
                 "select saleorder_id from saleorder_shop_rel where saleorder_id = %s and shop_id = %s" % (
@@ -1922,11 +1921,12 @@ class SaleShop(models.Model):
     # @api.multi
     def import_orders(self):
         # try:
+        sale_order_obj = self.env['sale.order']
+        order_ids = []
+        ctx = self.env.context.copy()
         for shop in self:
-            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                  shop.prestashop_instance_id.webservice_key or None)
-            filters = {'display': 'full', 'filter[id]': '>[%s]' % shop.last_order_id_id_import,
-                       'filter[id_shop]': '%s' % self.presta_id, 'limit': 10}
+            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,shop.prestashop_instance_id.webservice_key or None)
+            filters = {'display': 'full', 'filter[id]': '>[%s]' % shop.last_order_id_id_import, 'filter[id_shop]': '%s' % self.presta_id, 'limit': 1000}
             prestashop_order_data = prestashop.get('orders', options=filters)
             if prestashop_order_data.get('orders') and prestashop_order_data.get('orders').get('order'):
                 orders = prestashop_order_data.get('orders').get('order')
@@ -1935,11 +1935,19 @@ class SaleShop(models.Model):
                 else:
                     orders = [orders]
                 for order in orders:
+                    order_ids.append(order.get('id'))
+                    #if order exists skip
+                    sale_order_id = sale_order_obj.search([('presta_id', '=', order.get('id')), ('prestashop_order', '=', True)], limit=1)
+                    if sale_order_id:
+                        continue
                     shop.create_presta_order(order, prestashop)
                     shop.write({'last_order_id_id_import': order.get('id')})
+
                 self.env.cr.commit()
         # except Exception as e:
         #     raise ValidationError(_(str(e)))
+        if ctx.get('from_wizard', False) and order_ids:
+            return order_ids
         return True
 
     def create_presta_message_threads(self, thread, prestashop):
