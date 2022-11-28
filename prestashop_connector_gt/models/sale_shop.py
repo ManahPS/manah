@@ -15,7 +15,6 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
-
 from odoo import api, fields, models, _
 from datetime import timedelta, datetime, date, time
 from odoo.exceptions import UserError, ValidationError
@@ -928,9 +927,8 @@ class SaleShop(models.Model):
         product_supplier_info_obj = self.env['product.supplierinfo']
         product_feature_obj = self.env['product.feature']
         product_feature_value_obj = self.env['product.feature.value']
-
+        prod_id = prod_temp_obj
         print('\nproduct_dict+++full+++++++', product_dict)
-
         try:
             manufacturers_id = supplier_id = False
             prd_tmp_vals = {
@@ -1250,7 +1248,7 @@ class SaleShop(models.Model):
             new_context = dict(self.env.context)
             new_context.update({'log_id': log_id})
             self.env.context = new_context
-        return True
+        return prod_id.id if prod_id.id else True
 
     def return_image_data(self, prestashop, product_id, product_presta_id, img_id):
         product_image_obj = self.env['product.images']
@@ -1292,12 +1290,13 @@ class SaleShop(models.Model):
 
     # @api.multi
     def import_products(self):
+        product_ids = []
         for shop in self:
             try:
                 product_categ_obj = self.env['product.category']
-                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                      shop.prestashop_instance_id.webservice_key or None)
-                filters = {'display': 'full', 'filter[id]': '>[%s]' % self.last_product_id_import, 'limit': 100}
+                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url, shop.prestashop_instance_id.webservice_key or None)
+                # filters = {'display': 'full', 'filter[id]': '>[%s]' % self.last_product_id_import, 'limit': 1000}
+                filters = {'display': 'full', 'filter[id]': '>[0]', 'limit': 1000}
                 # filters = {'display': 'full', 'limit': 1000}
                 prestashop_product_data = prestashop.get('products', options=filters)
                 # prestashop_product_data = prestashop.get('product_features', options=filters)
@@ -1319,7 +1318,7 @@ class SaleShop(models.Model):
                                     self.env.cr.commit()
                                 except Exception as e:
                                     logger.info('Parent category ===> %s' % (e))
-                        shop.create_presta_product(product_dict, prestashop)
+                        product_ids.append(shop.create_presta_product(product_dict, prestashop))
                         shop.write({'last_product_id_import': product_dict.get('id')})
                         self.env.cr.commit()
             except Exception as e:
@@ -1333,7 +1332,7 @@ class SaleShop(models.Model):
                 new_context = dict(self.env.context)
                 new_context.update({'log_id': log_id})
                 self.env.context = new_context
-        return True
+        return product_ids if product_ids else  True
 
     def createInventory(self, stock, lot_stock_id, prestashop):
         product_obj = self.env['product.product']

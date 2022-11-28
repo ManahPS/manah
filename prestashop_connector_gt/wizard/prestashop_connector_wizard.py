@@ -1,6 +1,5 @@
 import time
 #from openerp.addons.prestashop_connector_gt.prestashop_api import amazonerp_osv as amazon_api_obj
-
 from odoo import api, fields, models, _
 
 
@@ -69,7 +68,7 @@ class PrestashopConnectorWizard(models.Model):
 
     # @api.one
     def import_prestashop(self):
-        shop_ids=self.shop_ids
+        shop_ids = self.shop_ids
         if self.import_product_attributes:
             for shop_id in shop_ids:
                 shop_id.import_product_attributes()
@@ -96,10 +95,16 @@ class PrestashopConnectorWizard(models.Model):
 
         if self.import_addresses:
             self.shop_ids.import_addresses()
-
         if self.import_products:
+            product_ids = []
             for shop_id in shop_ids:
-                shop_id.import_products()
+                res = shop_id.import_products()
+                if isinstance(res, list):
+                    product_ids += res
+            if product_ids:
+                action = self.env["ir.actions.actions"]._for_xml_id("prestashop_connector_gt.inherit_product_template_action")
+                action['domain'] = [('id', 'in', product_ids)]
+                return action
 
         if self.import_products_images:
             for shop_id in shop_ids:
