@@ -2791,8 +2791,7 @@ class SaleShop(models.Model):
         stock_quanty = self.env['stock.quant']
         for shop in self:
             try:
-                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                      shop.prestashop_instance_id.webservice_key or None)
+                prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,shop.prestashop_instance_id.webservice_key or None)
                 # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location,shop.prestashop_instance_id.webservice_key or None)
                 query = "select product_id from product_templ_shop_rel where shop_id = %s" % shop.id
                 self.env.cr.execute(query)
@@ -2894,6 +2893,10 @@ class SaleShop(models.Model):
 
                     print('\nproduct_schema+++++++++++++', product_schema)
 
+                    try:
+                        product_schema['product'].pop('position_in_category')
+                    except Exception as error:
+                        pass
                     presta_res = prestashop.add('products', product_schema)
                     print('\npresta_response+++++++++++++', presta_res)
 
@@ -2990,6 +2993,7 @@ class SaleShop(models.Model):
                         'language': {'attrs': {'id': '1'}, 'value': category.name and str(category.name)}},
                     'id_shop_default': self.id,
                 })
+
                 presta_res = prestashop.add('categories', category_schema)
                 if presta_res.get('prestashop').get('category').get('id'):
                     categ_presta_id = self.get_value_data(presta_res.get('prestashop').get('category').get('id'))
@@ -3137,6 +3141,11 @@ class SaleShop(models.Model):
                     product_schema.get('product').get('associations').get('product_features').update(
                         {'product_feature': feature_values})
 
+
+                try:
+                    product_schema['product'].pop('position_in_category')
+                except Exception as error:
+                    pass
                 presta_res = prestashop.add('products', product_schema)
                 print('\npresta_res+++++++++++++++', presta_res)
 
