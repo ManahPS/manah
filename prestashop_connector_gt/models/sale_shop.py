@@ -15,6 +15,8 @@
 #    along with this program. If not, see <http://www.gnu.org/licenses/>.
 #
 ##############################################################################
+import ipdb
+
 from odoo import api, fields, models, _
 from datetime import timedelta, datetime, date, time
 from odoo.exceptions import UserError, ValidationError
@@ -2318,8 +2320,7 @@ class SaleShop(models.Model):
         for shop in self:
             print('shop+++++++++++++++++++', shop.id)
             # try:
-            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
-                                                  shop.prestashop_instance_id.webservice_key or None)
+            prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,shop.prestashop_instance_id.webservice_key or None)
             # prestashop = PrestaShopWebServiceDict(shop.prestashop_instance_id.location,shop.prestashop_instance_id.webservice_key or None)
             query = "select product_id from product_templ_shop_rel where shop_id = %s" % shop.id
             self.env.cr.execute(query)
@@ -2339,14 +2340,18 @@ class SaleShop(models.Model):
                 #     print('else++++++++++++++++++++++')
                 #     product_data_ids = prod_templ_obj.search([('id', 'in', fetch_products)])
 
-                product_data_ids = prod_templ_obj.search(
-                    [('product_to_be_updated', '=', True)])
+                product_data_ids = prod_templ_obj.search([('product_to_be_updated', '=', True)])
 
                 print('\nproduct_data_ids++++++++++++', product_data_ids)
 
                 for each in product_data_ids:
                     print('\neach+++++++++++++++++++', each.name, each.categ_id, each.categ_id.presta_id)
-                    product = prestashop.get('products', each.presta_id)
+                    try:
+                        product = prestashop.get('products', each.presta_id)
+                    except Exception as error:
+                        print("*******NO HAY NADA PASAMOS AL PROXIMO*************")
+                        print(error)
+                        continue
                     print('\nproduct++++++++++++++++++++', product)
                     categ = [{'id': each.categ_id.presta_id and str(each.categ_id.presta_id)}]
                     position_categ = each.categ_id.presta_id
@@ -2357,8 +2362,7 @@ class SaleShop(models.Model):
                     while parent_id:
                         categ.append({'id': parent_id.presta_id and str(parent_id.presta_id)})
                         parent_id = parent_id.parent_id
-                    product.get('product').get('associations').update(
-                        {'categories': {'attrs': {'node_type': 'category'}, 'category': categ}, })
+                    product.get('product').get('associations').update({'categories': {'attrs': {'node_type': 'category'}, 'category': categ}})
 
                     product_update_vals = {
                         'name': {'language': {'attrs': {'id': '1'}, 'value': each.name and str(each.name)}},
@@ -2374,8 +2378,7 @@ class SaleShop(models.Model):
                         'width': each.product_width and str(each.product_width),
                         'weight': each.product_wght and str(each.product_wght),
                         'height': each.product_hght and str(each.product_hght),
-                        'available_now': ({'language': {'attrs': {'id': '1'}, 'value': each.product_instock and str(
-                            int(each.product_instock))}}),
+                        'available_now': ({'language': {'attrs': {'id': '1'}, 'value': each.product_instock and str(int(each.product_instock))}}),
                         # 'on_sale': each.product_onsale and str(int(each.product_onsale)),
                         'id': each.presta_id and str(each.presta_id),
                         'id_category_default': each.categ_id and str(each.categ_id.presta_id),
@@ -2386,22 +2389,17 @@ class SaleShop(models.Model):
                     }
 
                     if each.supplier_id:
-                        product_update_vals.update({
-                            'id_supplier': each.supplier_id and str(each.supplier_id.presta_id) or '0',
-                        })
+                        product_update_vals.update({'id_supplier': each.supplier_id and str(each.supplier_id.presta_id) or '0'})
 
                     if each.manufacturer_id:
-                        product_update_vals.update({
-                            'id_manufacturer': each.manufacturer_id and str(each.manufacturer_id.presta_id) or '0',
-                        })
+                        product_update_vals.update({'id_manufacturer': each.manufacturer_id and str(each.manufacturer_id.presta_id) or '0'})
 
                     print('\nproduct_update_vals++++++++++', product_update_vals)
 
                     product.get('product').update(product_update_vals)
 
                     if each.product_spec_ids:
-                        features_data = product.get('product').get('associations').get(
-                            'product_features').get('product_feature')
+                        features_data = product.get('product').get('associations').get('product_features').get('product_feature')
                         feature_values = []
                         for feature_id in each.product_spec_ids:
                             vals = {
@@ -2411,8 +2409,7 @@ class SaleShop(models.Model):
                             feature_values.append(vals)
                         print('\nfeature_values+++++++++++', feature_values)
 
-                        product.get('product').get('associations').get('product_features').update(
-                            {'product_feature': feature_values})
+                        product.get('product').get('associations').get('product_features').update({'product_feature': feature_values})
 
                     product.get('product').pop('quantity')
                     combination_list = []
@@ -2447,26 +2444,21 @@ class SaleShop(models.Model):
                     product.get('product').pop('manufacturer_name')
                     print('\nproduct++++++++++++++++++++', product)
                     shop.write({'prestashop_last_update_product_data_date': datetime.now()})
-                    response = prestashop.edit('products', product)
+                    try:
+                        if product.get('product', {}).get('id_category_default') in ['False', 'True']:
+                            if product.get('product', {}).get('id_category_default') == 'False':
+                                product['product']['id_category_default'] = '0'
+                            elif product.get('product', {}).get('id_category_default') == 'True':
+                                product['product']['id_category_default'] = '1'
+
+                        response = prestashop.edit('products', product)
+                    except Exception as error:
+                        raise UserError(error)
                     each.write({
                         'product_to_be_updated': False
                     })
                 shop.write({'prestashop_last_update_product_data_date': datetime.now()})
                 shop.env.cr.commit()
-            # except Exception as e:
-            #     shop.write({'prestashop_last_update_product_data_date': datetime.now()})
-            #     print('Date Updated')
-            #     if self.env.context.get('log_id'):
-            #         log_id = self.env.context.get('log_id')
-            #         self.env['log.error'].create({'log_description': str(e), 'log_id': log_id})
-            #     else:
-            #         log_id_obj = self.env['prestashop.log'].create(
-            #             {'all_operations': 'update_product_data',
-            #              'error_lines': [(0, 0, {'log_description': str(e), })]})
-            #         log_id = log_id_obj.id
-            #     new_context = dict(self.env.context)
-            #     new_context.update({'log_id': log_id})
-            #     self.env.context = new_context
 
         return True
 

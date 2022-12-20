@@ -1,5 +1,6 @@
 import time
 #from openerp.addons.prestashop_connector_gt.prestashop_api import amazonerp_osv as amazon_api_obj
+from odoo.exceptions import UserError
 from odoo import api, fields, models, _
 
 
@@ -177,6 +178,10 @@ class PrestashopConnectorWizard(models.Model):
 
         if self.update_product_data:
             self.shop_ids.update_products()
+            # try:
+            #     self.shop_ids.update_products()
+            # except Exception as error:
+            #     raise UserError(error)
 
         if self.update_product_feature:
             self.shop_ids.update_products_feature()
