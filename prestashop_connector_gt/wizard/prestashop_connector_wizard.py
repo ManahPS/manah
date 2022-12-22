@@ -1,47 +1,51 @@
 import time
-#from openerp.addons.prestashop_connector_gt.prestashop_api import amazonerp_osv as amazon_api_obj
+# from openerp.addons.prestashop_connector_gt.prestashop_api import amazonerp_osv as amazon_api_obj
 from odoo.exceptions import UserError
 from odoo import api, fields, models, _
 
 
 class PrestashopConnectorWizard(models.Model):
     _name = "prestashop.connector.wizard"
-    
+
     @api.model
-    def default_get(self,fields_list):
-        result= super(PrestashopConnectorWizard,self).default_get(fields_list)
+    def default_get(self, fields_list):
+        result = super(PrestashopConnectorWizard, self).default_get(fields_list)
         if self._context.get('active_model') == 'sale.shop':
             obj = self.env['sale.shop'].browse(self._context.get('active_id'))
             result.update({'shop_ids': self._context.get('active_ids'),
                            'last_order_import_date': obj.last_prestashop_order_import_date})
         return result
-    
+
     shop_ids = fields.Many2many('sale.shop', string="Select Shops")
-    #import fields
+    operation = fields.Selection(selection=[('export', 'Export'), ('import', 'Import'), ('update', 'Update')],
+                                 string='Operation', required=True)
+    # import fields
     import_orders = fields.Boolean('Import Orders.')
     import_country_state = fields.Boolean('Import Country/State')
     last_order_import_date = fields.Datetime('Last presta order Import Date')
     import_products = fields.Boolean('Import Products')
     import_products_images = fields.Boolean('Import Products Images')
     import_categories = fields.Boolean('Import Categories')
-    import_customers = fields.Boolean('Import Customers',help='Import 2000 customer from prestashop to odoo at time and last import prestashop customer id store in shop. ')
-    count_import=fields.Integer('Total Import Record',default=0)
-    last_customer_id_import=fields.Integer('Last ID Import',default=0)
+    import_customers = fields.Boolean('Import Customers',
+                                      help='Import 2000 customer from prestashop to odoo at time and last import prestashop customer id store in shop. ')
+    count_import = fields.Integer('Total Import Record', default=0)
+    last_customer_id_import = fields.Integer('Last ID Import', default=0)
     import_suppliers = fields.Boolean('Import Suppliers')
     import_manufacturers = fields.Boolean('Import Manufacturers')
     import_taxes = fields.Boolean('Import Taxes')
     # import_tax_rules = fields.Boolean('Import Tax Rules')
     import_addresses = fields.Boolean('Import Addresses')
-    import_product_attributes = fields.Boolean('Import Products Attributes',help="Includes Product Attributes and Categories")
+    import_product_attributes = fields.Boolean('Import Products Attributes',
+                                               help="Includes Product Attributes and Categories")
     import_inventory = fields.Boolean('Import Inventory')
     import_carriers = fields.Boolean('Import Carriers')
-    import_messages=fields.Boolean("Import Messages")
-    import_cart_rules=fields.Boolean("Import Cart Rules")
-    import_catalog_rules=fields.Boolean("Import Catalog Rules")
+    import_messages = fields.Boolean("Import Messages")
+    import_cart_rules = fields.Boolean("Import Cart Rules")
+    import_catalog_rules = fields.Boolean("Import Catalog Rules")
     # update fields
-    update_categories=fields.Boolean("Update Categories")
-    update_cart_rules=fields.Boolean('Update Cart Rules')
-    update_catalog_rules=fields.Boolean("Upload Catalog Rules")
+    update_categories = fields.Boolean("Update Categories")
+    update_cart_rules = fields.Boolean('Update Cart Rules')
+    update_catalog_rules = fields.Boolean("Upload Catalog Rules")
     update_product_data = fields.Boolean('Update Product Data')
     update_product_price = fields.Boolean('Update Product Price')
     update_presta_product_inventory = fields.Boolean(string="Update Product Inventory")
@@ -59,16 +63,17 @@ class PrestashopConnectorWizard(models.Model):
 
     import_product_fetures = fields.Boolean(string="Import Product Feature")
 
-    
-#    @api.model
-#    def default_get(self, fields):
-#        result= super(AmzonConnectorWizard, self).default_get(fields)
-#        if self._context.get('active_model') == 'sale.shop':
-#            result.update({'shop_ids': self._context.get('active_ids')})
-#        return result
+    #    @api.model
+    #    def default_get(self, fields):
+    #        result= super(AmzonConnectorWizard, self).default_get(fields)
+    #        if self._context.get('active_model') == 'sale.shop':
+    #            result.update({'shop_ids': self._context.get('active_ids')})
+    #        return result
 
     # @api.one
     def import_prestashop(self):
+        if not self.operation:
+            raise UserError('No operation selected')
         shop_ids = self.shop_ids
         if self.import_product_attributes:
             for shop_id in shop_ids:
@@ -90,10 +95,6 @@ class PrestashopConnectorWizard(models.Model):
             self.shop_ids.import_country_state()
         if self.import_taxes:
             self.shop_ids.action_import_taxes()
-        #
-        # if self.import_tax_rules:
-        #     self.shop_ids.import_tax_rules()
-
         if self.import_addresses:
             self.shop_ids.import_addresses()
         if self.import_products:
@@ -103,7 +104,8 @@ class PrestashopConnectorWizard(models.Model):
                 if isinstance(res, list):
                     product_ids += res
             if product_ids:
-                action = self.env["ir.actions.actions"]._for_xml_id("prestashop_connector_gt.inherit_product_template_action")
+                action = self.env["ir.actions.actions"]._for_xml_id(
+                    "prestashop_connector_gt.inherit_product_template_action")
                 action['domain'] = [('id', 'in', product_ids)]
                 return action
 
@@ -118,12 +120,13 @@ class PrestashopConnectorWizard(models.Model):
         if self.import_carriers:
             for shop_id in shop_ids:
                 shop_id.import_carriers()
-                
+
         if self.import_orders:
             order_ids = []
             sale_orders = []
             for shop_id in shop_ids:
-                res = shop_id.with_context({'last_order_import_date': str(self.last_order_import_date), 'from_wizard':True}).import_orders()
+                res = shop_id.with_context(
+                    {'last_order_import_date': str(self.last_order_import_date), 'from_wizard': True}).import_orders()
                 if isinstance(res, list):
                     order_ids += res
             if order_ids:
@@ -135,7 +138,7 @@ class PrestashopConnectorWizard(models.Model):
         if self.import_messages:
             for shop_id in shop_ids:
                 shop_id.import_messages()
-                
+
         if self.import_cart_rules:
             for shop_id in shop_ids:
                 shop_id.import_cart_rules()
@@ -156,13 +159,13 @@ class PrestashopConnectorWizard(models.Model):
         #
         if self.update_categories:
             self.shop_ids.update_prestashop_category()
-#             for shop_id in shop_ids:
-#                 presta_instance_id=shop_id.prestashop_instance_id
-#                 prestashop=self.env['sale.shop'].browse(presta_instance_id.id).presta_connect_json()
-#                 categ_list=self.env['prestashop.category'].search([('shop_id','=',shop_id.id)])
-# #                 categ_list=[categ_id.id for categ_id in categ_list]
-#                 self.env['prestashop.upload.products'].upload_categories(prestashop,categ_list)
-        
+        #             for shop_id in shop_ids:
+        #                 presta_instance_id=shop_id.prestashop_instance_id
+        #                 prestashop=self.env['sale.shop'].browse(presta_instance_id.id).presta_connect_json()
+        #                 categ_list=self.env['prestashop.category'].search([('shop_id','=',shop_id.id)])
+        # #                 categ_list=[categ_id.id for categ_id in categ_list]
+        #                 self.env['prestashop.upload.products'].upload_categories(prestashop,categ_list)
+
         if self.update_cart_rules:
             self.shop_ids.update_cart_rules()
             # for shop_id in shop_ids:
@@ -172,7 +175,7 @@ class PrestashopConnectorWizard(models.Model):
             #     self.env['upload.cart.rule'].create({}).upload_cart_rule(False,cart_rule_ids,presta_instance_id)
         if self.update_catalog_rules:
             self.shop_ids.update_catalog_rules()
-            
+
         if self.update_product_price:
             self.shop_ids.update_product_price()
 
@@ -207,8 +210,11 @@ class PrestashopConnectorWizard(models.Model):
         if self.export_presta_product_inventory:
             self.shop_ids.export_presta_product_inventory()
 
-
-
-        return True
-    
-    
+        return {
+            'effect': {
+                'fadeout': 'slow',
+                'message': 'Operation Completed',
+                'img_url': '/web/static/img/smile.svg',
+                'type': 'rainbow_man',
+            }
+        }

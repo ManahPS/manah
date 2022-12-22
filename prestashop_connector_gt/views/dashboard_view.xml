@@ -10,7 +10,7 @@
                     <t t-name="kanban-box">
                         <div t-attf-class="#{kanban_color(0)}" style="width:450px;">
                             <t t-value="JSON.parse(record.presta_kanban_dashboard.raw_value)" t-set="dashboard"/>
-	                        <div class="o_kanban_card_header">
+                            <div class="o_kanban_card_header">
                                 <div class="o_kanban_card_header_title">
                                     <div class="o_primary">
                                         <field name="name" />
@@ -19,86 +19,24 @@
                                         <field name="company_id" />
                                     </div>
                                 </div>
-	                            <!--<div class="o_kanban_manage_button_section">-->
-	                                <!--<a class="o_kanban_manage_toggle_button" href="#">-->
-                                        <!--More -->
-                                        <!--<i class="fa fa-caret-down"/>-->
-                                    <!--</a>-->
-	                            <!--</div>-->
-	                        </div>
-                            <div class="container o_kanban_card_content o_visible">
-                                <div class="row">
-                                    <div class="col-xs-6 o_kanban_primary_left">
-                                        <button class="btn btn-primary" name="%(action_amazon_operation)d"
-                                            type="action" context='{"from_import":True}'>Import</button>
-                                        <button class="btn btn-primary" name="%(action_amazon_operation)d"
-                                            type="action" context='{"from_update":True}'>Update</button>
-                                        <button class="btn btn-primary" name="%(action_amazon_operation)d"
-                                            type="action" context='{"from_export":True}'>Export</button>
-                                       
+                            </div>
+                            <div class="container o_kanban_card_content">
+                                <div class="o_kanban_record_top">
+                                    <div id="shopify_left" class="o_kanban_top_left" style="width:35%">
+                                        <div class="o_kanban_record_headings">
+                                            <div id="perform_operation" class="col-xs-4">
+                                                <button class="btn btn-primary" name="%(action_amazon_operation)d" type="action">
+                                                    <span>Perform Operation</span>
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                            
                             <div class="container o_kanban_card_manage_pane o_visible">
                                 <div class="row">
-                                    <!-- <div class="col-xs-4 o_kanban_card_manage_section o_kanban_manage_view" t-if="dashboard.all_order">
-                                        <div class="o_kanban_card_manage_title">
-                                            <span>Orders</span>
-                                        </div>
-                                        <div>
-                                            <div t-if="dashboard.all_order" class="row">
-                                                <div class="col-xs-9">
-                                                     <a type="object" name="action_view_all_order">All Order</a>
-                                                </div>
-                                                <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.all_order"/> 
-                                                </div> 
-                                            </div>
-
-                                            <div t-if="dashboard.pending_order" class="row">
-                                                
-                                                <div class="col-xs-9">
-                                                     <a type="object" name="action_view_pending_order">Pending Order</a>
-                                                </div>
-                                                <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.pending_order"/> 
-                                                </div> 
-                                            </div>
-
-                                            <div t-if="dashboard.complete_order" class="row">
-                                                
-                                                <div class="col-xs-9">
-                                                     <a type="object" name="action_view_complete_order">Completed Order</a>
-                                                </div> 
-                                                <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.complete_order"/> 
-                                                </div>
-                                            </div>
-
-                                            <div t-if="dashboard.draft_order" class="row">
-                                                
-                                                <div class="col-xs-9">
-                                                    <a type="object" name="action_view_draft_order">Draft Order</a>
-                                                </div> 
-                                                <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.draft_order"/> 
-                                                </div>
-                                            </div>
-
-                                            <div t-if="dashboard.cancel_order" class="row">
-                                                
-                                                <div class="col-xs-9">
-                                                     <a type="object" name="action_view_cancel_order">Cancel Order</a>
-                                                </div> 
-                                                <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.cancel_order"/> 
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div> -->
                                     <div
-                                        class="col-xs-4 o_kanban_card_manage_section o_kanban_manage_new">
+                                            class="col-xs-4 o_kanban_card_manage_section o_kanban_manage_new">
                                         <div class="o_kanban_card_manage_title" t-if="dashboard.all_invoice">
                                             <span>Invoices</span>
                                         </div>
@@ -106,56 +44,54 @@
                                         <div>
                                             <div t-if="dashboard.all_invoice" class="row">
                                                 <div class="col-xs-9">
-                                                     <a type="object" name="action_view_all_invoice">All Invoice</a>
+                                                    <a type="object" name="action_view_all_invoice">All Invoice</a>
                                                 </div>
                                                 <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.all_invoice"/> 
-                                                </div> 
+                                                    <t t-esc="dashboard.all_invoice"/>
+                                                </div>
                                             </div>
 
                                             <div t-if="dashboard.pending_invoice" class="row">
-                                                
+
                                                 <div class="col-xs-9">
-                                                     <a type="object" name="action_view_pending_invoice">Pending Invoice</a>
+                                                    <a type="object" name="action_view_pending_invoice">Pending Invoice</a>
                                                 </div>
                                                 <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.pending_invoice"/> 
-                                                </div> 
+                                                    <t t-esc="dashboard.pending_invoice"/>
+                                                </div>
                                             </div>
 
                                             <div t-if="dashboard.complete_invoice" class="row">
-                                                
+
                                                 <div class="col-xs-9">
-                                                     <a type="object" name="action_view_complete_invoice">Completed Invoice</a>
-                                                </div> 
+                                                    <a type="object" name="action_view_complete_invoice">Completed Invoice</a>
+                                                </div>
                                                 <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.complete_invoice"/> 
+                                                    <t t-esc="dashboard.complete_invoice"/>
                                                 </div>
                                             </div>
 
                                             <div t-if="dashboard.draft_invoice" class="row">
-                                                
+
                                                 <div class="col-xs-9">
                                                     <a type="object" name="action_view_draft_invoice">Draft Invoice</a>
-                                                </div> 
+                                                </div>
                                                 <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.draft_invoice"/> 
+                                                    <t t-esc="dashboard.draft_invoice"/>
                                                 </div>
                                             </div>
 
                                             <div t-if="dashboard.cancel_invoice" class="row">
-                                                
+
                                                 <div class="col-xs-9">
-                                                     <a type="object" name="action_view_cancel_invoice">Cancel Invoice</a>
-                                                </div> 
+                                                    <a type="object" name="action_view_cancel_invoice">Cancel Invoice</a>
+                                                </div>
                                                 <div class="col-xs-3 text-right">
-                                                    <t t-esc="dashboard.cancel_invoice"/> 
+                                                    <t t-esc="dashboard.cancel_invoice"/>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-
                                     <div class="col-xs-4 o_kanban_card_manage_section o_kanban_manage_reports">
                                         <div class="o_kanban_card_manage_title" t-if="dashboard.all_stock">
                                             <span>Delivery Orders</span>
@@ -164,7 +100,7 @@
                                         <div>
                                             <div t-if="dashboard.all_stock" class="row">
                                                 <div class="col-xs-9">
-                                                     <a type="object" name="action_view_all_stock">All Delivery</a>
+                                                    <a type="object" name="action_view_all_stock">All Delivery</a>
                                                 </div>
                                                 <div class="col-xs-3 text-right">
                                                     <t t-esc="dashboard.all_stock"/>
@@ -174,7 +110,7 @@
                                             <div t-if="dashboard.pending_stock" class="row">
 
                                                 <div class="col-xs-9">
-                                                     <a type="object" name="action_view_pending_stock">Pending Delivery</a>
+                                                    <a type="object" name="action_view_pending_stock">Pending Delivery</a>
                                                 </div>
                                                 <div class="col-xs-3 text-right">
                                                     <t t-esc="dashboard.pending_stock"/>
@@ -184,7 +120,7 @@
                                             <div t-if="dashboard.complete_stock" class="row">
 
                                                 <div class="col-xs-9">
-                                                     <a type="object" name="action_view_complete_stock">Completed Delivery</a>
+                                                    <a type="object" name="action_view_complete_stock">Completed Delivery</a>
                                                 </div>
                                                 <div class="col-xs-3 text-right">
                                                     <t t-esc="dashboard.complete_stock"/>
@@ -192,23 +128,23 @@
                                             </div>
 
                                             <!--<div t-if="dashboard.back_order" class="row">-->
-                                                <!--<div class="col-xs-9">-->
-                                                    <!--<a type="object" name="presta_action_picking_tree_late">Late delivery</a>-->
-                                                <!--</div>-->
-                                                <!--<div class="col-xs-3 text-right">-->
-                                                    <!--<t t-esc="dashboard.back_order"/>-->
-                                                <!--</div>-->
+                                            <!--<div class="col-xs-9">-->
+                                            <!--<a type="object" name="presta_action_picking_tree_late">Late delivery</a>-->
+                                            <!--</div>-->
+                                            <!--<div class="col-xs-3 text-right">-->
+                                            <!--<t t-esc="dashboard.back_order"/>-->
+                                            <!--</div>-->
                                             <!--</div>-->
                                             <!--<div t-if="dashboard.late_delivey" class="row">-->
-                                                <!--<div class="col-xs-9">-->
-                                                    <!--<a type="object" name="presta_action_picking_tree_backorder">Back Order</a>-->
-                                                <!--</div>-->
-                                                <!--<div class="col-xs-3 text-right">-->
-                                                    <!--<t t-esc="dashboard.late_delivey"/>-->
-                                                <!--</div>-->
+                                            <!--<div class="col-xs-9">-->
+                                            <!--<a type="object" name="presta_action_picking_tree_backorder">Back Order</a>-->
+                                            <!--</div>-->
+                                            <!--<div class="col-xs-3 text-right">-->
+                                            <!--<t t-esc="dashboard.late_delivey"/>-->
+                                            <!--</div>-->
                                             <!--</div>-->
                                             <!--<div>-->
-                                                <!--<a type="object" name="presta_action_picking_tree_waiting">Waiting</a>-->
+                                            <!--<a type="object" name="presta_action_picking_tree_waiting">Waiting</a>-->
                                             <!--</div>-->
                                         </div>
                                     </div>
@@ -221,11 +157,11 @@
         </field>
     </record>
 
-      <record id="open_prestashop_instance_kanban" model="ir.actions.act_window">
+    <record id="open_prestashop_instance_kanban" model="ir.actions.act_window">
         <field name="name">Instance Dashboard</field>
         <field name="res_model">sale.shop</field>
-<!--         <field name="view_type">form</field>
- -->        <field name="view_mode">kanban,form</field>
+        <!--         <field name="view_type">form</field>
+         -->        <field name="view_mode">kanban,form</field>
         <field name="usage">menu</field>
     </record>
 
