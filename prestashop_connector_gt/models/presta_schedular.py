@@ -59,7 +59,7 @@ class SaleShop(models.Model):
 	def import_prestashop_orders_scheduler(self, cron_mode=True):
 		instance_obj = self.env['sale.shop']
 		search_ids = self.search([])
-		search_ids.import_orders()
+		search_ids._cron_import_orders()
 		return True
 
 	def import_prestashop_import_address_scheduler(self, cron_mode=True):

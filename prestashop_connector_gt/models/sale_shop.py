@@ -1948,6 +1948,43 @@ class SaleShop(models.Model):
         if ctx.get('from_wizard', False) and order_ids:
             return order_ids
         return True
+    
+
+    def _cron_import_orders(self):
+        # try:
+        sale_order_obj = self.env['sale.order']
+        order_ids = []
+        ctx = self.env.context.copy()
+        
+        for shop in self:
+            try:
+                if shop.prestashop_instance_id.webservice_key and shop.shop_physical_url:
+                    prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,shop.prestashop_instance_id.webservice_key or None)
+                    filters = {'display': 'full', 'filter[id]': '>[%s]' % shop.last_order_id_id_import, 'filter[id_shop]': '%s' % shop.presta_id, 'limit': 1000}
+                    prestashop_order_data = prestashop.get('orders', options=filters)
+                    if prestashop_order_data.get('orders') and prestashop_order_data.get('orders').get('order'):
+                        orders = prestashop_order_data.get('orders').get('order')
+                        if isinstance(orders, list):
+                            orders = orders
+                        else:
+                            orders = [orders]
+                        for order in orders:
+                            order_ids.append(order.get('id'))
+                            #if order exists skip
+                            sale_order_id = sale_order_obj.search([('presta_id', '=', order.get('id')), ('prestashop_order', '=', True)], limit=1)
+                            if sale_order_id:
+                                continue
+                            shop.create_presta_order(order, prestashop)
+                            shop.write({'last_order_id_id_import': order.get('id')})
+
+                    self.env.cr.commit()
+                else:
+                    print('No webservice key or url')
+            except Exception as e:
+                print('Error in cron import orders', e)
+        if ctx.get('from_wizard', False) and order_ids:
+            return order_ids
+        return True
 
     def create_presta_message_threads(self, thread, prestashop):
         res_obj = self.env['res.partner']
@@ -2379,8 +2416,8 @@ class SaleShop(models.Model):
                         'available_now': ({'language': {'attrs': {'id': '1'}, 'value': each.product_instock and str(int(each.product_instock))}}),
                         # 'on_sale': each.product_onsale and str(int(each.product_onsale)),
                         'id': each.presta_id and str(each.presta_id),
-                        'id_category_default': each.categ_id and str(each.categ_id.presta_id),
-                        'position_in_category': '1',
+                        #'id_category_default': each.categ_id and str(each.categ_id.presta_id),
+                        #'position_in_category': '1',
                         # 'description': {'language': {'attrs': {'id': '1'}, 'value': each.product_description}}
                         # 'name': {'language': {'attrs': {'id': '1'}, 'value': each.prd_label}},
                         # 'product_img_ids':product.get('associations').get('images').get('image') or False,
@@ -2752,7 +2789,7 @@ class SaleShop(models.Model):
         for shop in self:
             prestashop = PrestaShopWebServiceDict(shop.shop_physical_url,
                                                   shop.prestashop_instance_id.webservice_key or None)
-            sale_order_ids = sale_order.search([('order_status_update', '=', True)])
+            sale_order_ids = sale_order.search([('order_status_update', '=', True),('presta_id','!=',False),('shop_id','=',shop.id)])
             try:
                 for sale_order_id in sale_order_ids:
                     order_his_data = prestashop.get('order_histories', options={'schema': 'blank'})
@@ -3701,6 +3738,9 @@ class SaleShop(models.Model):
             #     new_context = dict(self.env.context)
             #     new_context.update({'log_id': log_id})
             #     self.env.context = new_context
+    
+    
+
 
     def action_import_taxes(self):
         account_tax_group_obj = self.env['account.tax.group']
@@ -3779,3 +3819,4 @@ class SaleShop(models.Model):
                         account_tax_rule_obj.create(rule_vals)
                     else:
                         odoo_tax_rule_id.write(rule_vals)
+
